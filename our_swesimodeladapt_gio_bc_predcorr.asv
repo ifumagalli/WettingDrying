@@ -10,7 +10,7 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % h = h0+wd
 
 %ELENA%
-save_path = 'C:\Users\Elenucci@\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
+save_path = 'C:\Users\\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 %IVAN%
 %save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 
@@ -707,7 +707,6 @@ Vol(p1)=sum(Vol_el);
 % end
 
 pdeplot(vertices,boundaries,elements,'xydata',hn,'contour','on'), axis equal
-title(strcat('t = ',num2str(t)))
 % % attento = max(abs((vn)))
 pause(0.2)
 % if mod(t/dt,10)==0

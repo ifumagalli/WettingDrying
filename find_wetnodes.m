@@ -1,5 +1,5 @@
-function [ wetnodes ] = find_wetnodes(boundaries,c,g,tol,phase)
-% [ wetnodes ] = FIND_WETNODES(boundaries&,c&,tol)
+function [ wetnodes ] = find_wetnodes(elements,c,g,tol,phase)
+% [ wetnodes ] = FIND_WETNODES(elements,c,tol)
 % finds the wet nodes and returns a vector with their indexes
 % C = celerity 2*sqrt(g*wd)
 % g = gravity acceleration
@@ -14,15 +14,16 @@ switch phase
     otherwise,
 end
 
-% Wetting elements whose wet vertices are more than 2
+% Wetting elements whose wet vertices are at least 2
 % (only one step of front progression)
-wetnodes = zeros(1,size(boundaries,2)*2);
-for i=1:size(boundaries,2)
+wetnodes = zeros(1,size(elements,2)*3);
+for i=1:size(elements,2)
     %%% this cycle could be made more efficient
-    v1 = boundaries(1,i); v2 = boundaries(2,i);
-    if c(v1)>tol | c(v2)>tol
-        wetnodes(2*i-1) = v1;
-        wetnodes(2*i) = v2;
+    v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
+    if ((c(v1)>tol) + (c(v2)>tol) + (c(v3)>tol))>1
+        wetnodes(3*i-2) = v1;
+        wetnodes(3*i-1) = v2;
+        wetnodes(3*i) = v3;
     end
 end
     
