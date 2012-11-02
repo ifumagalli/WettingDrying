@@ -28,6 +28,7 @@ for i=1:size(elements,2)
 end
     
 wetnodes = unique(wetnodes);
+wetnodes = wetnodes(2:end); % to remove 0, that's not an index
 
 end
 

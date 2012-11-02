@@ -10,7 +10,7 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % h = h0+wd
 
 %ELENA%
-save_path = 'C:\Users\\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
+save_path = 'C:\Users\Elenucci@\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 %IVAN%
 %save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 
@@ -136,7 +136,7 @@ f3 = 0.*f1;
 
 % Initial conditions
 
-[un,vn,cin,wdin]=iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0);
+[un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0);
 
 size(wdin)
 size(h0)
@@ -430,11 +430,13 @@ disp('trova nodi wet')
 tic
 % Find wetnodes (da tenere)
 wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
-wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';
-drydof = setdiff(dof,wetdof);
+drynodes = setdiff(dof_v,wetnodes);
+wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
+drydof = setdiff(dof,wetdof);%veri drydof
 dof = wetdof; %%% non mi piace, ma almeno non riscrivo tutto...
-dof_uv_in = intersect(dof_uv_in,wetdof); dof_c = intersect(dof_c,wetdof);
-drynodes_uv = intersect(dof_uv_in,drydof); drynodes_c = intersect(dof_c,drydof);
+%l'errore è qui: ci sono i nov che ballano...
+dof_uv_in = intersect(dof_v,wetnodes); dof_c = intersect(dof_c,wetnodes);
+drynodes_uv = intersect(dof_v,drynodes); drynodes_c = intersect(dof_c,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
 toc
 
@@ -707,6 +709,7 @@ Vol(p1)=sum(Vol_el);
 % end
 
 pdeplot(vertices,boundaries,elements,'xydata',hn,'contour','on'), axis equal
+title(strcat('t = ',num2str(t)))
 % % attento = max(abs((vn)))
 pause(0.2)
 % if mod(t/dt,10)==0
