@@ -33,6 +33,8 @@ deltat_deltax = dt/h_k_m
 
 nbn = 2;
 
+identita = eye(3*nov,3*nov);
+
 [sk,lk,r1,r2]=stretching(vertices,elements);
 % l2=lk;
 % h_k = 2*lk;
@@ -434,9 +436,9 @@ wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
 drynodes = setdiff(dof_uv_tot,wetnodes);
 wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
-dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
-dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
-drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
+%15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
+%15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
+%15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
 toc
 
@@ -456,10 +458,12 @@ disp('risoluzione sistema lineare - Predictor')
 %            cna(nodes0,1) = cDir_in;
         end
         if isDry %gestione dei nodi dry: poniamo tutto a 0
-            rhs  = rhs(dof);
-            una(drynodes_uv,1) = 0;
-            vna(drynodes_uv,1) = 0;
-            cna(drynodes_c,1) = 0;
+            rhs(drydof) = 0;
+            %una(drynodes_uv,1) = 0;
+            %vna(drynodes_uv,1) = 0;
+            %cna(drynodes_c,1) = 0;
+            aglo(drydof,:) = identita(drydof,:);
+            aglo(:,drydof) = identita(:,drydof);
         end
         temp = aglo(dof,dof)\rhs; % system solution
         una(dof_uv_in,1) = temp(1:ndof_uv_in,1);
@@ -472,6 +476,10 @@ disp('risoluzione sistema lineare - Predictor')
         cna(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
     end
 
+disp('max(u) max(v) max(c)')
+[max(una),max(vna),max(cna)]
+disp('min(u) min(v) min(c)')
+[min(una),min(vna),min(cna)]
 %@<%
 
 wdna = cna.^2/4./g;
@@ -499,9 +507,9 @@ wetnodes = find_wetnodes(elements,cn,g,wdtol,'corr');
 drynodes = setdiff(dof_uv_tot,wetnodes);
 wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
-dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
-dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
-drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
+%15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
+%15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
+%15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
 toc
 
@@ -521,10 +529,12 @@ disp('risoluzione sistema lineare - Corrector')
 %            cn(nodes0,1) = cDir_in;
         end
         if isDry %gestione dei nodi dry: poniamo tutto a 0
-            rhs  = rhs(dof);
-            un(drynodes_uv,1) = 0;
-            vn(drynodes_uv,1) = 0;
-            cn(drynodes_c,1) = 0;
+            rhs(drydof) = 0;
+            %una(drynodes_uv,1) = 0;
+            %vna(drynodes_uv,1) = 0;
+            %cna(drynodes_c,1) = 0;
+            aglo(drydof,:) = identita(drydof,:);
+            aglo(:,drydof) = identita(:,drydof);
         end
         temp = aglo(dof,dof)\rhs; % system solution
         un(dof_uv_in,1) = temp(1:ndof_uv_in,1);
@@ -536,6 +546,11 @@ disp('risoluzione sistema lineare - Corrector')
         vn(dof_uv_in,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
         cn(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
     end
+    
+disp('max(u) max(v) max(c)')
+[max(un),max(vn),max(cn)]
+disp('min(u) min(v) min(c)')
+[min(un),min(vn),min(cn)]
 %@<%
      
 % Aggiornamento variabili altezza
