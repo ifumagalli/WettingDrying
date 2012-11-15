@@ -10,9 +10,9 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % h = h0+wd
 
 %ELENA%
-save_path = 'C:\Users\Elenucci@\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
+%save_path = 'C:\Users\Elenucci@\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 %IVAN%
-%save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
+save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 
 coarse=3; % alpha sempre =1 %??? unused?
 
@@ -429,15 +429,14 @@ cDir = [cDir0,cDir1];
 disp('trova nodi wet')
 tic
 % Find wetnodes (da tenere)
+dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% prima dell'intersezione con i wetnodes
 wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
-drynodes = setdiff(dof_v,wetnodes);
+drynodes = setdiff(dof_uv_tot,wetnodes);
 wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
-drydof = setdiff(dof,wetdof);%veri drydof
+drydof = setdiff(dof_tot,wetdof);%veri drydof
 dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
-%l'errore è qui: ci sono i nov che ballano...
-dof_c_tot = dof_c; % prima dell'intersezione con i wetnodes
-dof_uv_in = intersect(dof_v,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
-drynodes_uv = intersect(dof_v,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
+dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
+drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
 toc
 
@@ -493,16 +492,19 @@ wdna = cna.^2/4./g;
 %@>%
 
 disp('trova nodi wet')
+tic
 % Find wetnodes (da tenere)
 clear wetnodes
 wetnodes = find_wetnodes(elements,cn,g,wdtol,'corr');
-wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';
-drydof = setdiff(dof,wetdof);
-dof = wetdof; %%% non mi piace, ma almeno non riscrivo tutto...
-dof_uv_in = intersect(dof_uv_in,wetdof); dof_c = intersect(dof_c_out,wetdof);
-drynodes_uv = intersect(dof_uv_in,drydof); drynodes_c = intersect(dof_c_out,drydof);
+drynodes = setdiff(dof_uv_tot,wetnodes);
+wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
+drydof = setdiff(dof_tot,wetdof);%veri drydof
+dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
+dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
+drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
- 
+toc
+
 disp('risoluzione sistema lineare - Corrector')
 % Linear system
     isDir = ~isempty([uDir_in,vDir_in,cDir]);
