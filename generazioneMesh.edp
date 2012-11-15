@@ -1,0 +1,8 @@
+int N=6;
+mesh Th = square(N,N);
+plot(Th);
+
+Th=movemesh(Th,[5*x-2.5,5*y-2.5]);
+plot(Th);
+
+savemesh(Th,"square6x6.msh");

@@ -1,4 +1,4 @@
-function [un,vn,cin,wdin]=iniswe2D_gio(x,y,p,t,time,g,h0)
+function [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,p,t,time,g,h0)
 %INISWE2D Initial conditions for the shallow water problem
 %   [U,V,CIN,ETA]=INISWE2D(X,Y,T) computes the velocity field components U and
 %   V and the elevation ETA (with respect to an horizontal reference level)
@@ -103,7 +103,7 @@ rqq = sqrt(xqq.^2 + yqq.^2);
 
 %@>%
 wdqq = zeros(nq,nt);
-[i,j] = find(rqq<0.5);
+[i,j] = find(rqq<.5);
 wdqq(i,j) = 1;
 %@<%
 

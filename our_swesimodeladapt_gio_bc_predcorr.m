@@ -435,8 +435,9 @@ wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
 drydof = setdiff(dof,wetdof);%veri drydof
 dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
 %l'errore è qui: ci sono i nov che ballano...
-dof_uv_in = intersect(dof_v,wetnodes); dof_c = intersect(dof_c,wetnodes);
-drynodes_uv = intersect(dof_v,drynodes); drynodes_c = intersect(dof_c,drynodes);
+dof_c_tot = dof_c; % prima dell'intersezione con i wetnodes
+dof_uv_in = intersect(dof_v,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
+drynodes_uv = intersect(dof_v,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
 toc
 
@@ -498,8 +499,8 @@ wetnodes = find_wetnodes(elements,cn,g,wdtol,'corr');
 wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';
 drydof = setdiff(dof,wetdof);
 dof = wetdof; %%% non mi piace, ma almeno non riscrivo tutto...
-dof_uv_in = intersect(dof_uv_in,wetdof); dof_c = intersect(dof_c,wetdof);
-drynodes_uv = intersect(dof_uv_in,drydof); drynodes_c = intersect(dof_c,drydof);
+dof_uv_in = intersect(dof_uv_in,wetdof); dof_c = intersect(dof_c_out,wetdof);
+drynodes_uv = intersect(dof_uv_in,drydof); drynodes_c = intersect(dof_c_out,drydof);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
  
 disp('risoluzione sistema lineare - Corrector')
