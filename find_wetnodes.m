@@ -27,8 +27,8 @@ for i=1:size(elements,2)
     end
 end
     
-wetnodes = unique(wetnodes);
-wetnodes = wetnodes(2:end); % to remove 0, that's not an index
+wetnodes = setdiff(unique(wetnodes),[0]);
+    % setdiff is to remove 0: it's not an index
 
 end
 

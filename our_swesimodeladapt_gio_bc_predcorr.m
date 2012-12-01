@@ -2,6 +2,10 @@
 
 function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,tstart,theta)
 
+% our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,ts
+% tart,theta)
+
+
 %@>% = inizio modifica Bulgarello-Fumagalli
 %@<% = fine modifica Bulgarello-Fumagalli
 
@@ -402,6 +406,7 @@ tic
 
 [aglo,rhs] = assem_mat_vect_gio_stab_i(vertices,elements,boundaries,g,dt,un,vn,cn,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
     ,unoold,vnoold,cnoold,nx_nodes,ny_nodes); 
+figure(101), spy(aglo); title('matrice aglo')
 if ~isempty(nodesxy)
 %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
 %                                  nnzxy);
@@ -432,8 +437,8 @@ disp('trova nodi wet')
 tic
 % Find wetnodes (da tenere)
 dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% prima dell'intersezione con i wetnodes
-wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
-drynodes = setdiff(dof_uv_tot,wetnodes);
+wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred')
+drynodes = setdiff(dof_uv_tot,wetnodes)
 wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
@@ -462,8 +467,19 @@ disp('risoluzione sistema lineare - Predictor')
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
             %cna(drynodes_c,1) = 0;
+% disp('matrice aglo');
+% aglo
+figure(102), spy(aglo); title('matrice con Dirichlet')
             aglo(drydof,:) = identita(drydof,:);
             aglo(:,drydof) = identita(:,drydof);
+%             aglo(drydof,drydof) = 1.e+10*aglo(drydof,drydof);
+% disp('matrice con imposizione su drydof');
+% aglo
+figure(103); spy(aglo); title('matrice con imposizione su drydof');
+% disp('matrice che risolveremo');
+% aglo(dof,dof)
+figure(104); spy(aglo(dof,dof)); title('matrice che risolveremo');
+
         end
         temp = aglo(dof,dof)\rhs; % system solution
         una(dof_uv_in,1) = temp(1:ndof_uv_in,1);
@@ -480,6 +496,7 @@ disp('max(u) max(v) max(c)')
 [max(una),max(vna),max(cna)]
 disp('min(u) min(v) min(c)')
 [min(una),min(vna),min(cna)]
+pause;
 %@<%
 
 wdna = cna.^2/4./g;
