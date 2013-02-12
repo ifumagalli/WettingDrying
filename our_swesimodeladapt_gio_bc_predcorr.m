@@ -26,7 +26,7 @@ dt = (tspan(2)-tspan(1))/tspan(3)
 ho_k = h_k;
 h_k_m=max(h_k)
 % threshold nodi wet
-wdtol = 1e-3;
+wdtol = 1e-1;
 deltat_deltax = dt/h_k_m 
 [ar]=pdetrg(vertices,elements); % aree
 
@@ -60,8 +60,8 @@ yqq = phiq(1,:)'*y(it1)' + phiq(2,:)'*y(it2)' + phiq(3,:)'*y(it3)';
 [g,n,l] = swecoeffgRl_gio; 
 
 % Bathimetry: bottom elevation
-h0 = batswe2D_gio(x,y);
-% h0 = 1.61e-7*(x.^2 + y.^2);% parabolic bowl
+% h0 = batswe2D_gio(x,y);
+h0 = 1.61e-7*(x.^2 + y.^2);% parabolic bowl
 b = abs(max(y)-min(y));
 
 % Termine noto pendenza
@@ -143,6 +143,7 @@ f3 = 0.*f1;
 % Initial conditions
 
 [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0);
+wdtol = wdtol*max(wdin) % so that we have a relative tolerance
 
 size(wdin)
 size(h0)
@@ -158,7 +159,10 @@ pdesurf(vertices,elements,hn)
 hold on
 pdesurf(vertices,elements,h0)
 hold off
-
+figure(1001);
+pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
+title('Initial condition - water depth only')%strcat('t = ',num2str(t), ' - Corrector'))
+pause;
 % pdeplot(vertices,boundaries,elements,'zdata',hn)
 % hold on
 % pdesurf(vertices,elements,h0)
@@ -385,7 +389,9 @@ unoold = un;
 vnoold = vn;
 cnoold = cn;
 
+disp('Starting time loop')
 % Time cicle
+tspan(1),dt,tspan(2)
 for t = tspan(1)+dt:dt:tspan(2)
     t
 p=int64(t/dt);    
@@ -437,8 +443,8 @@ disp('trova nodi wet')
 tic
 % Find wetnodes (da tenere)
 dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% prima dell'intersezione con i wetnodes
-wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred')
-drynodes = setdiff(dof_uv_tot,wetnodes)
+wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
+drynodes = setdiff(dof_uv_tot,wetnodes);
 wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
@@ -497,9 +503,16 @@ disp('max(u) max(v) max(c)')
 disp('min(u) min(v) min(c)')
 [min(una),min(vna),min(cna)]
 pause;
-%@<%
 
+% Aggiornamento variabili altezza e plot Predictor
 wdna = cna.^2/4./g;
+hna = wdna + h0;
+figure(1000);
+% pdeplot(vertices,boundaries,elements,'xydata',hna,'contour','on'), axis equal
+pdesurf(vertices,elements,hna)
+title(strcat('t = ',num2str(t), ' - Predictor'))
+pause;
+%@<%
 
 % Corrector
 
@@ -743,8 +756,12 @@ Vol(p1)=sum(Vol_el);
 % end
 % end
 
+figure(1000);
 pdeplot(vertices,boundaries,elements,'xydata',hn,'contour','on'), axis equal
-title(strcat('t = ',num2str(t)))
+title(strcat('t = ',num2str(t), ' - Corrector'))
+figure(1001);
+pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
+title(strcat('t = ',num2str(t), ' - Corrector'))
 % % attento = max(abs((vn)))
 pause(0.2)
 % if mod(t/dt,10)==0
