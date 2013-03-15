@@ -1,6 +1,6 @@
  
 
-function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,tstart,theta)
+function Ivan_our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,tstart,theta)
 
 % our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,ts
 % tart,theta)
@@ -18,7 +18,7 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 %IVAN%
 save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
 
-%coarse=3; % alpha sempre =1 %??? unused
+coarse=3; % alpha sempre =1 %??? unused?
 
 dt = (tspan(2)-tspan(1))/tspan(3)
 [h_k]=dim(vertices,elements); % diam(cerchio circoscritto)
@@ -26,7 +26,7 @@ dt = (tspan(2)-tspan(1))/tspan(3)
 ho_k = h_k;
 h_k_m=max(h_k)
 % threshold nodi wet
-wdtol = 1e-1; % it will be: wdtol = wdtol*max(wdin)
+wdtol = 1e-1;
 deltat_deltax = dt/h_k_m 
 [ar]=pdetrg(vertices,elements); % aree
 
@@ -36,14 +36,13 @@ deltat_deltax = dt/h_k_m
 [d,nside] = size(boundaries);
 
 nbn = 2;
-  % un lato è costituito da nbn=2 punti
 
 identita = eye(3*nov,3*nov);
 
 [sk,lk,r1,r2]=stretching(vertices,elements);
 % l2=lk;
 % h_k = 2*lk;
-% pdesurf(vertices,elements,h_k)
+pdesurf(vertices,elements,h_k)
 % pause
 
 % Common vectors
@@ -63,10 +62,12 @@ yqq = phiq(1,:)'*y(it1)' + phiq(2,:)'*y(it2)' + phiq(3,:)'*y(it3)';
 % Bathimetry: bottom elevation
 % h0 = batswe2D_gio(x,y);
 h0 = 1.61e-7*(x.^2 + y.^2);% parabolic bowl
-% b = abs(max(y)-min(y)); % unused
+b = abs(max(y)-min(y));
 
 % Termine noto pendenza
 [f_x,f_y]=pdegrad(vertices,elements,h0); %grad(h0) a centro cella
+
+
 %f1 = -g*f_x; 
 %f2 = -g*f_y;
 %f3 = 0.*f1;
@@ -139,14 +140,13 @@ f3 = 0.*f1;
 % l2=lk;
 % l1=sk.*lk;
 
-
 % Initial conditions
 
-disp('Initial conditions')
-[un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0)
+[un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0);
 wdtol = wdtol*max(wdin) % so that we have a relative tolerance
 
-size(wdin)==size(h0)
+size(wdin)
+size(h0)
 
 hn = +wdin + h0; % altezza su piano di riferimento
 wdn = wdin;
@@ -161,7 +161,7 @@ pdesurf(vertices,elements,h0)
 hold off
 figure(1001);
 pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
-title('Initial condition - water depth only')
+title('Initial condition - water depth only')%strcat('t = ',num2str(t), ' - Corrector'))
 pause;
 % pdeplot(vertices,boundaries,elements,'zdata',hn)
 % hold on
@@ -394,7 +394,7 @@ disp('Starting time loop')
 tspan(1),dt,tspan(2)
 for t = tspan(1)+dt:dt:tspan(2)
     t
-% p=int64(t/dt); %unused
+p=int64(t/dt);    
 p1=int64(t/dt+1);
 
 disp('assemblaggio')
@@ -413,13 +413,13 @@ tic
 [aglo,rhs] = assem_mat_vect_gio_stab_i(vertices,elements,boundaries,g,dt,un,vn,cn,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
     ,unoold,vnoold,cnoold,nx_nodes,ny_nodes); 
 figure(101), spy(aglo); title('matrice aglo')
-% if ~isempty(nodesxy)
+if ~isempty(nodesxy)
 %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
 %                                  nnzxy);
 %     aglo(nodesxy+nov,:) = sparse(1:nnzxy,nodesxy+nov,ones(1,nnzxy),...
 %                                      nnzxy,3*nov,nnzxy);
 %     rhs([nodesxy,nodesxy+nov]) = 0;   
-% end
+end
 toc
     disp('bc dir')
     tic
@@ -442,13 +442,10 @@ cDir = [cDir0,cDir1];
 disp('trova nodi wet')
 tic
 % Find wetnodes (da tenere)
-dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
+dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% prima dell'intersezione con i wetnodes
 wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
-wetdof_uv = intersect(wetnodes,dof_uv_tot)
-wetdof_c = intersect(wetnodes,dof_c_tot)
-dry_uv_nodes = setdiff(dof_uv_tot,wetnodes);
-dry_c_nodes = setdiff(dof_c_tot,wetnodes);
-wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
+drynodes = setdiff(dof_uv_tot,wetnodes);
+wetdof = [wetnodes,wetnodes+nov,wetnodes+2*nov]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
 %15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
@@ -472,15 +469,15 @@ disp('risoluzione sistema lineare - Predictor')
 %            cna(nodes0,1) = cDir_in;
         end
         if isDry %gestione dei nodi dry: poniamo tutto a 0
-            rhs(drydof) = 0;
+%###             rhs(drydof) = 0;
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
             %cna(drynodes_c,1) = 0;
 % disp('matrice aglo');
 % aglo
 figure(102), spy(aglo); title('matrice con Dirichlet')
-            aglo(drydof,:) = identita(drydof,:);
-            aglo(:,drydof) = identita(:,drydof);
+%###             aglo(drydof,:) = identita(drydof,:);
+%###             aglo(:,drydof) = identita(:,drydof);
 %             aglo(drydof,drydof) = 1.e+10*aglo(drydof,drydof);
 % disp('matrice con imposizione su drydof');
 % aglo
@@ -490,23 +487,41 @@ figure(103); spy(aglo); title('matrice con imposizione su drydof');
 figure(104); spy(aglo(dof,dof)); title('matrice che risolveremo');
 
         end
-        temp = aglo(dof,dof)\rhs; % system solution
+%###         temp = aglo(dof,dof)\rhs; % system solution
+%###         una(dof_uv_in,1) = temp(1:ndof_uv_in,1);
+%###         vna(dof_uv_in,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
+%###         cna(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
+        temp = aglo\rhs
+        figure(12);
+        una(dof_uv_in,1) = temp(1:ndof_uv_in,1);
+%         subplot(1,3,1); pdesurf(vertices,elements,una);
+        vna(dof_uv_in,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
+        subplot(1,2,1); quiver(vertices(1,:),vertices(2,:),una',vna');
+        cna(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
+        subplot(1,2,2); pdesurf(vertices,elements,cna);
+        pause
+    else
+        temp = aglo\rhs;
         una(dof_uv_in,1) = temp(1:ndof_uv_in,1);
         vna(dof_uv_in,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
         cna(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
-    else
-        temp = aglo\rhs;
-        una(dof_v,1) = temp(1:ndof_v,1);
-        vna(dof_v,1) = temp(ndof_v+1:2*ndof_v,1);
-        cna(dof_c,1) = temp(2*ndof_v+1:end,1);
     end
+
+drydof
+una(drydof(find(drydof<=ndof_uv_in)),1) = 0; %###
+vna(drydof(find((drydof>ndof_uv_in) & (drydof<=2*ndof_uv_in)))-ndof_uv_in,1) = 0; %###
+cna(drydof(find(drydof>2*ndof_uv_in))-2*ndof_uv_in,1) = 0;  %###
+
+size(vertices(1,:)),size(vertices(2,:)),size(una),size(vna)
+figure(13)
+subplot(1,2,1); quiver(vertices(1,:),vertices(2,:),una',vna');
+subplot(1,2,2); pdesurf(vertices,elements,cna);
+pause
 
 disp('max(u) max(v) max(c)')
 [max(una),max(vna),max(cna)]
 disp('min(u) min(v) min(c)')
 [min(una),min(vna),min(cna)]
-rhs
-aglo(dof,dof)
 pause;
 
 % Aggiornamento variabili altezza e plot Predictor
@@ -571,7 +586,11 @@ disp('risoluzione sistema lineare - Corrector')
             aglo(drydof,:) = identita(drydof,:);
             aglo(:,drydof) = identita(:,drydof);
         end
-        temp = aglo(dof,dof)\rhs; % system solution
+%###         temp = aglo(dof,dof)\rhs; % system solution
+%###         un(dof_uv_in,1) = temp(1:ndof_uv_in,1);
+%###         vn(dof_uv_in,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
+%###         cn(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
+        temp = aglo\rhs;
         un(dof_uv_in,1) = temp(1:ndof_uv_in,1);
         vn(dof_uv_in,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
         cn(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
@@ -582,6 +601,10 @@ disp('risoluzione sistema lineare - Corrector')
         cn(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
     end
     
+un(drydof(find(drydof<=ndof_uv_in)),1) = 0; %###
+vn(drydof(find((drydof>ndof_uv_in) & (drydof<=2*ndof_uv_in)))-ndof_uv_in,1) = 0; %###
+cn(drydof(find(drydof>2*ndof_uv_in))-2*ndof_uv_in,1) = 0;  %###
+
 disp('max(u) max(v) max(c)')
 [max(un),max(vn),max(cn)]
 disp('min(u) min(v) min(c)')
