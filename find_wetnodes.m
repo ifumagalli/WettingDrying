@@ -10,7 +10,7 @@ switch phase
     case 'pred',
         tol = 2*sqrt(g*tol); % tol was on height, and we have celerity
     case 'corr',
-        tol = 2*sqrt(g*tol);
+        tol = 2*sqrt(g*tol*100);
     otherwise,
 end
 
