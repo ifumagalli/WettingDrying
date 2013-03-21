@@ -5,3 +5,9 @@ Autori: Elena Bulgarello, Ivan Fumagalli
 Contiene solo i files modificati da noi.
 
 Ivan_our_... non serve a niente
+
+griglie_varie.mat:
+	p,e,t : points,edges,triangles della mesh square6x6.msh
+	pp,ee,tt:		||		  square12x12.msh
+	ppp,eee,ttt:		||		  square24x24.msh
+	tspan,tstart,theta

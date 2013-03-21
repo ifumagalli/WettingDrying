@@ -62,7 +62,8 @@ yqq = phiq(1,:)'*y(it1)' + phiq(2,:)'*y(it2)' + phiq(3,:)'*y(it3)';
 
 % Bathimetry: bottom elevation
 % h0 = batswe2D_gio(x,y);
-h0 = 1.61e-7*(x.^2 + y.^2);% parabolic bowl
+% h0 = 1.61e-7*(x.^2 + y.^2);% parabolic bowl
+h0 = 0.1*(x.^2+y.^2);
 % b = abs(max(y)-min(y)); % unused
 
 % Termine noto pendenza
@@ -476,9 +477,14 @@ disp('risoluzione sistema lineare - Predictor')
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
             %cna(drynodes_c,1) = 0;
-% disp('matrice aglo');
-% aglo
-figure(102), spy(aglo); title('matrice con Dirichlet')
+            % disp('matrice aglo');
+            % aglo
+            figure(102), spy(aglo); title('matrice con Dirichlet')
+            disp('min e max: eigs(aglo)')
+            min(eigs(aglo,3,0)), max(eigs(aglo,3))
+            disp('condest(aglo)')
+            condest(aglo)
+        
             aglo(drydof,:) = identita(drydof,:);
             aglo(:,drydof) = identita(:,drydof);
 %             aglo(drydof,drydof) = 1.e+10*aglo(drydof,drydof);
@@ -490,6 +496,13 @@ figure(103); spy(aglo); title('matrice con imposizione su drydof');
 figure(104); spy(aglo(dof,dof)); title('matrice che risolveremo');
 
         end
+        disp('size(aglo), size(aglo(wetdof,wetdof))')
+            size(aglo), size(aglo(wetdof,wetdof))
+        disp('min e max: eigs(aglo); eigs(aglo(wetdof,wetdof))')
+            min(eigs(aglo,3,0)), max(eigs(aglo,3))
+            min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
+        disp('condest(aglo), condest(aglo(wetdof,wetdof))')
+            condest(aglo), condest(aglo(wetdof,wetdof))
         temp = aglo(dof,dof)\rhs; % system solution
         una(dof_v,1) = temp(1:ndof_uv_in,1);
             una(dry_uv_nodes,1) = 0;
@@ -581,9 +594,20 @@ disp('risoluzione sistema lineare - Corrector')
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
             %cna(drynodes_c,1) = 0;
+            disp('min e max: eigs(aglo)')
+            min(eigs(aglo,3,0)), max(eigs(aglo,3))
+            disp('condest(aglo)')
+            condest(aglo)
             aglo(drydof,:) = identita(drydof,:);
             aglo(:,drydof) = identita(:,drydof);
         end
+        disp('size(aglo), size(aglo(wetdof,wetdof))')
+            size(aglo), size(aglo(wetdof,wetdof))
+        disp('min e max: eigs(aglo); eigs(aglo(wetdof,wetdof))')
+            min(eigs(aglo,3,0)), max(eigs(aglo,3))
+            min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
+        disp('condest(aglo), condest(aglo(wetdof,wetdof))')
+            condest(aglo), condest(aglo(wetdof,wetdof))
         temp = aglo(dof,dof)\rhs; % system solution
         un(dof_v,1) = temp(1:ndof_uv_in,1);
             un(dry_uv_nodes,1) = 0;
