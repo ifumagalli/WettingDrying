@@ -1,0 +1,20 @@
+ EXEC of the plot  : ffglut.exe
+-- FreeFem++ v  3.160000 (date Fri Oct  7 19:29:19 GMT 2011)
+ Load: lg_fem lg_mesh lg_mesh3 eigenvalue
+    1 : int N=24;
+ *** Warning  The identifier N hide a Global identifier
+ 
+    2 : mesh Th = square(N,N);
+    3 : plot(Th);
+    4 :
+    5 : Th=movemesh(Th,[5*x-2.5,5*y-2.5]);
+    6 : plot(Th);
+    7 :
+    8 : savemesh(Th,"square24x24.msh"); sizestack + 1024 =1176  ( 152 )
+ 
+  -- Square mesh : nb vertices  =625 ,  nb triangles = 1152 ,  nb boundary edges 96
+  number of required edges : 0
+times: compile 0.05s, execution 0.409s,  mpirank:0
+ CodeAlloc : nb ptr  2241,  size :151436 mpirank: 0
+Bien: On a fini Normalement
+ try getConsole C:\Users\Ivan\Documents\GitHub\WettingDrying\generazioneMesh.edp 

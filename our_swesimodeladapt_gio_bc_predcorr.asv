@@ -445,12 +445,13 @@ tic
 % Find wetnodes (da tenere)
 dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
 wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
-wetdof_uv = intersect(wetnodes,dof_uv_tot);
-wetdof_c = intersect(wetnodes,dof_c_tot);
+wetdof_uv = intersect(wetnodes,dof_uv_tot); nwetdof_uv = length(wetdof_uv);
+wetdof_c = intersect(wetnodes,dof_c_tot);   nwetdof_c = length(wetdof_c);
 dry_uv_nodes = setdiff(dof_uv_tot,wetnodes);
 dry_c_nodes = setdiff(dof_c_tot,wetnodes);
 wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
+chi_wet=zeros(nov,1); chi_wet(wetnodes)=1;
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
 %15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
 %15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
@@ -473,42 +474,43 @@ disp('risoluzione sistema lineare - Predictor')
 %            cna(nodes0,1) = cDir_in;
         end
         if isDry %gestione dei nodi dry: poniamo tutto a 0
-            rhs(drydof) = 0;
+%             rhs(drydof) = 0;
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
             %cna(drynodes_c,1) = 0;
             % disp('matrice aglo');
             % aglo
             figure(102), spy(aglo); title('matrice con Dirichlet')
-            disp('min e max: eigs(aglo)')
-            min(eigs(aglo,3,0)), max(eigs(aglo,3))
+%             disp('min e max: eigs(aglo)')
+%             min(eigs(aglo,3,0)), max(eigs(aglo,3))
             disp('condest(aglo)')
             condest(aglo)
         
-            aglo(drydof,:) = identita(drydof,:);
-            aglo(:,drydof) = identita(:,drydof);
+%             aglo(drydof,:) = identita(drydof,:);
+%             aglo(:,drydof) = identita(:,drydof);
 %             aglo(drydof,drydof) = 1.e+10*aglo(drydof,drydof);
 % disp('matrice con imposizione su drydof');
 % aglo
 figure(103); spy(aglo); title('matrice con imposizione su drydof');
 % disp('matrice che risolveremo');
 % aglo(dof,dof)
-figure(104); spy(aglo(dof,dof)); title('matrice che risolveremo');
+figure(104); spy(aglo(wetdof,wetdof)); title('matrice che risolveremo');
 
         end
-        disp('size(aglo), size(aglo(dof,dof))')
-            size(aglo), size(aglo(dof,dof))
-        disp('min e max: eigs(aglo); eigs(aglo(dof,dof))')
-            min(eigs(aglo,3,0)), max(eigs(aglo,3))
-            min(eigs(aglo(dof,dof),3,0)), max(eigs(aglo(dof,dof),3))
-        disp('condest(aglo), condest(aglo(dof,dof))')
-            condest(aglo), condest(aglo(dof,dof))
-        temp = aglo(dof,dof)\rhs; % system solution
-        una(dof_v,1) = temp(1:ndof_uv_in,1);
+        disp('size(aglo), size(aglo(wetdof,wetdof))')
+            size(aglo), size(aglo(wetdof,wetdof))
+%         disp('min e max: eigs(aglo); eigs(aglo(wetdof,wetdof))')
+%             min(eigs(aglo,3,0)), max(eigs(aglo,3))
+%         disp('min e max: eigs(aglo(wetdof,wetdof)')
+%             min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
+        disp('condest(aglo), condest(aglo(wetdof,wetdof))')
+            condest(aglo), condest(aglo(wetdof,wetdof))
+        temp = aglo(wetdof,wetdof)\rhs(wetdof); % system solution
+        una(wetdof_uv,1) = temp(1:nwetdof_uv,1);
             una(dry_uv_nodes,1) = 0;
-        vna(dof_v,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
+        vna(wetdof_uv,1) = temp(nwetdof_uv+1:2*nwetdof_uv,1);
             vna(dry_uv_nodes,1) = 0;
-        cna(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
+        cna(wetdof_c,1) = temp(2*nwetdof_uv+1:end,1);
             cna(dry_c_nodes,1) = 0;
     else
         temp = aglo\rhs;
@@ -533,7 +535,8 @@ figure(1000);
 pdesurf(vertices,elements,hna)
 title(strcat('t = ',num2str(t), ' - Predictor'))
 figure(1000);
-pdeplot(vertices,boundaries,elements,'xydata',hn,'contour','on'), axis equal
+% pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
+pdesurf(vertices,elements,hna.*chi_wet), axis equal
 title(strcat('h_n at t = ',num2str(t), ' - Predictor'));
 figure(1001);
 pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
@@ -562,12 +565,13 @@ tic
 clear wetnodes
 dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
 wetnodes = find_wetnodes(elements,cna,g,wdtol,'corr');
-wetdof_uv = intersect(wetnodes,dof_uv_tot);
-wetdof_c = intersect(wetnodes,dof_c_tot);
+wetdof_uv = intersect(wetnodes,dof_uv_tot); nwetdof_uv = length(wetdof_uv);
+wetdof_c = intersect(wetnodes,dof_c_tot);   nwetdof_c = length(wetdof_c);
 dry_uv_nodes = setdiff(dof_uv_tot,wetnodes);
 dry_c_nodes = setdiff(dof_c_tot,wetnodes);
 wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
+chi_wet=zeros(nov,1); chi_wet(wetdof)=1;
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
 %15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
 %15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
@@ -590,30 +594,31 @@ disp('risoluzione sistema lineare - Corrector')
 %            cn(nodes0,1) = cDir_in;
         end
         if isDry %gestione dei nodi dry: poniamo tutto a 0
-            rhs(drydof) = 0;
+%             rhs(drydof) = 0;
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
             %cna(drynodes_c,1) = 0;
-            disp('min e max: eigs(aglo)')
-            min(eigs(aglo,3,0)), max(eigs(aglo,3))
+%             disp('min e max: eigs(aglo)')
+%             min(eigs(aglo,3,0)), max(eigs(aglo,3))
             disp('condest(aglo)')
             condest(aglo)
-            aglo(drydof,:) = identita(drydof,:);
-            aglo(:,drydof) = identita(:,drydof);
+%             aglo(drydof,:) = identita(drydof,:);
+%             aglo(:,drydof) = identita(:,drydof);
         end
-        disp('size(aglo), size(aglo(dof,dof))')
+        disp('size(aglo), size(aglo(wetdof,wetdof))')
             size(aglo), size(aglo(wetdof,wetdof))
-        disp('min e max: eigs(aglo); eigs(aglo(dof,dof))')
-            min(eigs(aglo,3,0)), max(eigs(aglo,3))
-            min(eigs(aglo(wetdof,dof),3,0)), max(eigs(aglo(dof,dof),3))
-        disp('condest(aglo), condest(aglo(dof,dof))')
-            condest(aglo), condest(aglo(dof,dof))
-        temp = aglo(dof,dof)\rhs; % system solution
-        un(dof_v,1) = temp(1:ndof_uv_in,1);
+%         disp('min e max: eigs(aglo); eigs(aglo(wetdof,wetdof))')
+%             min(eigs(aglo,3,0)), max(eigs(aglo,3))
+%         disp('min e max: eigs(aglo(wetdof,wetdof)')
+%             min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
+        disp('condest(aglo), condest(aglo(wetdof,wetdof))')
+            condest(aglo), condest(aglo(wetdof,wetdof))
+        temp = aglo(wetdof,wetdof)\rhs(wetdof); % system solution
+        un(wetdof_uv,1) = temp(1:nwetdof_uv,1);
             un(dry_uv_nodes,1) = 0;
-        vn(dof_v,1) = temp(ndof_uv_in+1:2*ndof_uv_in,1);
+        vn(wetdof_uv,1) = temp(nwetdof_uv+1:2*nwetdof_uv,1);
             vn(dry_uv_nodes,1) = 0;
-        cn(dof_c,1) = temp(2*ndof_uv_in+1:end,1);
+        cn(wetdof_c,1) = temp(2*nwetdof_uv+1:end,1);
             cn(dry_c_nodes,1) = 0;
     else
         temp = aglo\rhs;
@@ -803,7 +808,7 @@ Vol(p1)=sum(Vol_el);
 % end
 
 figure(1000);
-pdeplot(vertices,boundaries,elements,'xydata',hn,'contour','on'), axis equal
+pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
 title(strcat('h_n at t = ',num2str(t), ' - Corrector'))
 figure(1001);
 pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal

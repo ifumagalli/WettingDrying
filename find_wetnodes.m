@@ -8,9 +8,9 @@ function [ wetnodes ] = find_wetnodes(elements,c,g,tol,phase)
 
 switch phase
     case 'pred',
-        tol = 2*sqrt(g*tol); % tol was on height, and we have celerity
+        tol = 2*sqrt(g*tol/10); % tol was on height, and we have celerity
     case 'corr',
-        tol = 2*sqrt(g*tol*100);
+        tol = 2*sqrt(g*tol);
     otherwise,
 end
 
