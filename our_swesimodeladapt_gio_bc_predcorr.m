@@ -399,6 +399,32 @@ for t = tspan(1)+dt:dt:tspan(2)
 % p=int64(t/dt); %unused
 p1=int64(t/dt+1);
 
+%@>%
+disp('trova nodi wet')
+tic
+% Find wetnodes (da tenere)
+dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
+wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
+wetnodes_pred=wetnodes;
+wetdof_uv = intersect(wetnodes,dof_uv_tot); nwetdof_uv = length(wetdof_uv);
+wetdof_c = intersect(wetnodes,dof_c_tot);   nwetdof_c = length(wetdof_c);
+dry_uv_nodes = setdiff(dof_uv_tot,wetnodes);
+dry_c_nodes = setdiff(dof_c_tot,wetnodes);
+wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
+drydof = setdiff(dof_tot,wetdof);%veri drydof
+chi_wet=zeros(nov,1); chi_wet(wetnodes)=1;
+
+ourdof = setdiff(dof,2*ndof_v+dry_c_nodes);
+%15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
+%15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
+%15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
+ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
+toc
+
+% % imponiamo a 0 le velocità per limitare picchi ai bordi [Kroon]
+% un(dry_uv_nodes) = 0;
+% vn(dry_uv_nodes) = 0;
+
 disp('assemblaggio')
 tic 
     % matrice di stiffness e rhs 
@@ -440,28 +466,6 @@ uDir_in = [uDir_in0,uDir_in1];
 vDir_in = [vDir_in0,vDir_in1];
 cDir = [cDir0,cDir1];
 
-%@>%
-disp('trova nodi wet')
-tic
-% Find wetnodes (da tenere)
-dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
-wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
-wetnodes_pred=wetnodes;
-wetdof_uv = intersect(wetnodes,dof_uv_tot); nwetdof_uv = length(wetdof_uv);
-wetdof_c = intersect(wetnodes,dof_c_tot);   nwetdof_c = length(wetdof_c);
-dry_uv_nodes = setdiff(dof_uv_tot,wetnodes);
-dry_c_nodes = setdiff(dof_c_tot,wetnodes);
-wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
-drydof = setdiff(dof_tot,wetdof);%veri drydof
-chi_wet=zeros(nov,1); chi_wet(wetnodes)=1;
-
-ourdof = setdiff(dof,2*ndof_v+dry_c_nodes);
-%15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
-%15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
-%15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
-ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
-toc
-
 disp('risoluzione sistema lineare - Predictor')
 % Linear system
     isDir = ~isempty([uDir_in,vDir_in,cDir]);
@@ -498,7 +502,7 @@ disp('risoluzione sistema lineare - Predictor')
 figure(103); spy(aglo); title('matrice con imposizione su drydof');
 % disp('matrice che risolveremo');
 % aglo(dof,dof)
-figure(104); spy(aglo(wetdof,wetdof)); title('matrice che risolveremo');
+figure(104); spy(aglo(ourdof,ourdof)); title('matrice che risolveremo');
 
         end
         disp('size(aglo), size(aglo(wetdof,wetdof))')
@@ -534,38 +538,26 @@ pause;
 % Aggiornamento variabili altezza e plot Predictor
 wdna = cna.^2/4./g;
 hna = wdna + h0;
-wetted=setdiff(wetnodes_pred,wetnodes_corr)
-dryed=setdiff(wetnodes_corr,wetnodes_pred)
+wetted_pred=setdiff(wetnodes_pred,wetnodes_corr)
+dryed_pred=setdiff(wetnodes_corr,wetnodes_pred)
 figure(1000);
 % pdeplot(vertices,boundaries,elements,'xydata',hna,'contour','on'), axis equal
 pdesurf(vertices,elements,hna)
 title(strcat('t = ',num2str(t), ' - Predictor'))
 figure(1000);
 % pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
-pdeplot(vertices,boundaries,elements,'zdata',hn.*chi_wet,'contour','on','zstyle','discontinuous')
+pdeplot(vertices,boundaries,elements,'zdata',hna.*chi_wet,'contour','on','zstyle','discontinuous')
 % pdesurf(vertices,elements,hna.*chi_wet)
 title(strcat('h_n at t = ',num2str(t), ' - Predictor'));
 figure(1001);
-pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
+pdeplot(vertices,boundaries,elements,'xydata',wdna,'contour','on'), axis equal
 title(strcat('wd_n at t = ',num2str(t), ' - Predictor'))%@<%
 pause;
 
 
 % Corrector
 
-[aglo,rhs] = assem_mat_vect_gio_stab_adapt(vertices,elements,boundaries,g,dt,un,vn,cn,una,vna,cna,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
-    ,unoold,vnoold,cnoold,nx_nodes,ny_nodes); 
-
-%if ~isempty(nodesxy)
-%     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
-%                                  nnzxy);
-%     aglo(nodesxy+nov,:) = sparse(1:nnzxy,nodesxy+nov,ones(1,nnzxy),...
-%                                      nnzxy,3*nov,nnzxy);
-%     rhs([nodesxy,nodesxy+nov]) = 0;   
-%end
-
 %@>%
-
 disp('trova nodi wet')
 tic
 % Find wetnodes (da tenere)
@@ -587,6 +579,21 @@ ourdof= setdiff(dof,2*ndof_v+dry_c_nodes);
 %15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
 ndof=length(dof);ndof_uv_in=length(dof_uv_in);ndof_c=length(dof_c);
 toc
+
+% % imponiamo a 0 le velocità per limitare picchi ai bordi [Kroon]
+% una(dry_uv_nodes) = 0;
+% vna(dry_uv_nodes) = 0;
+
+[aglo,rhs] = assem_mat_vect_gio_stab_adapt(vertices,elements,boundaries,g,dt,un,vn,cn,una,vna,cna,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
+    ,unoold,vnoold,cnoold,nx_nodes,ny_nodes); 
+
+%if ~isempty(nodesxy)
+%     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
+%                                  nnzxy);
+%     aglo(nodesxy+nov,:) = sparse(1:nnzxy,nodesxy+nov,ones(1,nnzxy),...
+%                                      nnzxy,3*nov,nnzxy);
+%     rhs([nodesxy,nodesxy+nov]) = 0;   
+%end
 
 disp('risoluzione sistema lineare - Corrector')
 % Linear system
@@ -817,8 +824,12 @@ Vol(p1)=sum(Vol_el);
 % end
 % end
 
-wetted=setdiff(wetnodes_corr,wetnodes_pred)
-dryed=setdiff(wetnodes_pred,wetnodes_corr)
+wetted_corr=setdiff(wetnodes_corr,wetnodes_pred)
+dryed_corr=setdiff(wetnodes_pred,wetnodes_corr)
+
+wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
+dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
+
 figure(1000);
 % pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
 pdeplot(vertices,boundaries,elements,'zdata',hn.*chi_wet,'contour','on','zstyle','discontinuous')
