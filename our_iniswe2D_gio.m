@@ -83,22 +83,22 @@ vn = 0 + 0.*x;
 
 % versione nuova
 % hin = 1.e-7*(8-.3*(x.^2+y.^2));
-% hin = 0.55-0.0375*(x.^2+y.^2);
-% figure(1000); pdesurf(p,t,h0); hold on; pdesurf(p,t,hin);
-% underground_idxs = find(hin<=h0);
-% wdin = hin-h0;
-% wdin(underground_idxs) = 0;
-% title('Initial condition')
-% pause
-
-% PLANE ON PARABOLIC BOWL
-hin = 0.475-0.03*x;
+hin = 0.55-0.0375*(x.^2+y.^2);
 figure(1000); pdesurf(p,t,h0); hold on; pdesurf(p,t,hin);
 underground_idxs = find(hin<=h0);
 wdin = hin-h0;
 wdin(underground_idxs) = 0;
 title('Initial condition')
 pause
+
+% PLANE ON PARABOLIC BOWL
+% hin = 0.475-0.03*x;
+% figure(1000); pdesurf(p,t,h0); hold on; pdesurf(p,t,hin);
+% underground_idxs = find(hin<=h0);
+% wdin = hin-h0;
+% wdin(underground_idxs) = 0;
+% title('Initial condition')
+% pause
 
 % Radial Dam Break
 % 

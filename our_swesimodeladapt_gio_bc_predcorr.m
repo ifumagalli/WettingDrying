@@ -454,6 +454,8 @@ dry_c_nodes = setdiff(dof_c_tot,wetnodes);
 wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
 chi_wet=zeros(nov,1); chi_wet(wetnodes)=1;
+
+ourdof = setdiff(dof,2*ndof_v+dry_c_nodes);
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
 %15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
 %15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
@@ -507,12 +509,12 @@ figure(104); spy(aglo(wetdof,wetdof)); title('matrice che risolveremo');
 %             min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
         disp('condest(aglo), condest(aglo(wetdof,wetdof))')
             condest(aglo), condest(aglo(wetdof,wetdof))
-        temp = aglo(wetdof,wetdof)\rhs(wetdof); % system solution
-        una(wetdof_uv,1) = temp(1:nwetdof_uv,1);
-            una(dry_uv_nodes,1) = 0;
-        vna(wetdof_uv,1) = temp(nwetdof_uv+1:2*nwetdof_uv,1);
-            vna(dry_uv_nodes,1) = 0;
-        cna(wetdof_c,1) = temp(2*nwetdof_uv+1:end,1);
+        temp = aglo(ourdof,ourdof)\rhs(ourdof); % system solution
+        una(dof_uv_tot,1) = temp(1:ndof_v,1);
+%             una(dry_uv_nodes,1) = 0;
+        vna(dof_uv_tot,1) = temp(ndof_v+1:2*ndof_v,1);
+%             vna(dry_uv_nodes,1) = 0;
+        cna(wetdof_c,1) = temp(2*ndof_v+1:end,1);
             cna(dry_c_nodes,1) = 0;
     else
         temp = aglo\rhs;
@@ -578,6 +580,8 @@ dry_c_nodes = setdiff(dof_c_tot,wetnodes);
 wetdof = [wetdof_uv,wetdof_uv+ndof_v,wetdof_c+2*ndof_v]';%veri wetdof
 drydof = setdiff(dof_tot,wetdof);%veri drydof
 chi_wet=zeros(nov,1); chi_wet(wetnodes)=1;
+
+ourdof= setdiff(dof,2*ndof_v+dry_c_nodes);
 %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
 %15/11/2012% dof_uv_in = intersect(dof_uv_tot,wetnodes); dof_c = intersect(dof_c_tot,wetnodes);
 %15/11/2012% drynodes_uv = intersect(dof_uv_tot,drynodes); drynodes_c = intersect(dof_c_tot,drynodes);
@@ -619,12 +623,12 @@ disp('risoluzione sistema lineare - Corrector')
 %             min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
         disp('condest(aglo), condest(aglo(wetdof,wetdof))')
             condest(aglo), condest(aglo(wetdof,wetdof))
-        temp = aglo(wetdof,wetdof)\rhs(wetdof); % system solution
-        un(wetdof_uv,1) = temp(1:nwetdof_uv,1);
-            un(dry_uv_nodes,1) = 0;
-        vn(wetdof_uv,1) = temp(nwetdof_uv+1:2*nwetdof_uv,1);
-            vn(dry_uv_nodes,1) = 0;
-        cn(wetdof_c,1) = temp(2*nwetdof_uv+1:end,1);
+        temp = aglo(ourdof,ourdof)\rhs(ourdof); % system solution
+        un(dof_uv_tot,1) = temp(1:ndof_v,1);
+%             un(dry_uv_nodes,1) = 0;
+        vn(dof_uv_tot,1) = temp(ndof_v+1:2*ndof_v,1);
+%             vn(dry_uv_nodes,1) = 0;
+        cn(wetdof_c,1) = temp(2*ndof_v+1:end,1);
             cn(dry_c_nodes,1) = 0;
     else
         temp = aglo\rhs;
