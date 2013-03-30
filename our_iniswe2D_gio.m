@@ -1,4 +1,4 @@
-function [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,p,t,time,g,h0)
+function [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,p,t,time,g,h0,save_path)
 %INISWE2D Initial conditions for the shallow water problem
 %   [U,V,CIN,ETA]=INISWE2D(X,Y,T) computes the velocity field components U and
 %   V and the elevation ETA (with respect to an horizontal reference level)
@@ -84,11 +84,14 @@ vn = 0 + 0.*x;
 % versione nuova
 % hin = 1.e-7*(8-.3*(x.^2+y.^2));
 hin = 0.55-0.0375*(x.^2+y.^2);
-figure(1000); pdesurf(p,t,h0); hold on; pdesurf(p,t,hin);
+pfig=figure(1000); pdesurf(p,t,h0); hold on; pdesurf(p,t,hin);
 underground_idxs = find(hin<=h0);
 wdin = hin-h0;
 wdin(underground_idxs) = 0;
 title('Initial condition')
+print(pfig,'-deps',strcat(save_path,'AAAinitial_both','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'AAAinitial_both','.jpeg'));
+saveas(pfig,strcat(save_path,'AAAinitial_both','.fig'));
 pause
 
 % PLANE ON PARABOLIC BOWL
@@ -257,5 +260,6 @@ cin = 2*(g*wdin).^0.5;
 % cin = 10 + y.^2 + x.^2;
 % cin = 10 + 0.*x;
 % wdin = cin.^2./(4*g);
-
+cn=cin;
+save(strcat(save_path,'init.mat'),'un','vn','cn');
 return
