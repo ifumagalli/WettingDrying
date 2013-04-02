@@ -14,9 +14,10 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % h = h0+wd
 
 %ELENA%
-%save_path = 'C:\Users\Elenucci@\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\'
+% save_path = 'C:\Users\Elena\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\griglia_RDBfix_2_t4_1000_new\'
+save_path = 'C:\Users\Elena\Desktop\griglia_RDBfix_2_t4_1000\';
 %IVAN%
-save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\griglia_RDBfix_2\'
+% save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
 
 %coarse=3; % alpha sempre =1 %??? unused
 
@@ -161,10 +162,10 @@ hold on
 pdesurf(vertices,elements,h0)
 hold off
 pfig=figure(1001);
-set(gcf,'Visible','on');
+set(gcf,'Visible','off');
 pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
 title('Initial condition - water depth only')
-print(pfig,'-deps',strcat(save_path,'AAAinitial','.eps'));
+%print(pfig,'-deps',strcat(save_path,'AAAinitial','.eps'));
 print(pfig,'-djpeg',strcat(save_path,'AAAinitial','.jpeg'));
 saveas(pfig,strcat(save_path,'AAAinitial','.fig'));
 pause;
@@ -394,6 +395,8 @@ unoold = un;
 vnoold = vn;
 cnoold = cn;
 
+save(strcat(save_path,'dati.mat'),'tspan','h_k','wdtol','g','n','l')
+
 disp('Starting time loop')
 % Time cicle
 tspan(1),dt,tspan(2)
@@ -446,7 +449,7 @@ tic
 
 [aglo,rhs] = assem_mat_vect_gio_stab_i(vertices,elements,boundaries,g,dt,un,vn,cn,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
     ,unoold,vnoold,cnoold,nx_nodes,ny_nodes); 
-figure(101), set(gcf,'Visible','on');  spy(aglo); title('matrice aglo')
+figure(101), set(gcf,'Visible','off');  spy(aglo); title('matrice aglo')
 % if ~isempty(nodesxy)
 %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
 %                                  nnzxy);
@@ -494,7 +497,7 @@ disp('risoluzione sistema lineare - Predictor')
             %cna(drynodes_c,1) = 0;
             % disp('matrice aglo');
             % aglo
-            figure(102), set(gcf,'Visible','on');  spy(aglo); title('matrice con Dirichlet')
+            figure(102), set(gcf,'Visible','off');  spy(aglo); title('matrice con Dirichlet')
 %             disp('min e max: eigs(aglo)')
 %             min(eigs(aglo,3,0)), max(eigs(aglo,3))
             disp('condest(aglo)')
@@ -505,14 +508,14 @@ disp('risoluzione sistema lineare - Predictor')
 %             aglo(drydof,drydof) = 1.e+10*aglo(drydof,drydof);
 % disp('matrice con imposizione su drydof');
 % aglo
-figure(103); set(gcf,'Visible','on');  spy(aglo); title('matrice con imposizione su drydof');
+figure(103); set(gcf,'Visible','off');  spy(aglo); title('matrice con imposizione su drydof');
 % disp('matrice che risolveremo');
 % aglo(dof,dof)
 pfig=figure(104);
-set(gcf,'Visible','on');  spy(aglo(ourdof,ourdof)); title('matrice che risolveremo');
-print(pfig,'-deps',strcat(save_path,'matr',num2str(t,'%.2f'),'.eps'));
-print(pfig,'-djpeg',strcat(save_path,'matr',num2str(t,'%.2f'),'.jpeg'));
-saveas(pfig,strcat(save_path,'matr',num2str(t,'%.2f'),'.fig'));
+set(gcf,'Visible','off');  spy(aglo(ourdof,ourdof)); title('matrice che risolveremo');
+%print(pfig,'-deps',strcat(save_path,'matr',num2str(t,'%.3f'),'.eps'));
+print(pfig,'-djpeg',strcat(save_path,'matr',num2str(t,'%.3f'),'.jpeg'));
+saveas(pfig,strcat(save_path,'matr',num2str(t,'%.3f'),'.fig'));
 
         end
         disp('size(aglo), size(aglo(wetdof,wetdof))')
@@ -553,38 +556,44 @@ wdna = cna.^2/4./g;
 hna = wdna + h0;
 wetted_pred=setdiff(wetnodes_pred,wetnodes_corr)
 dryed_pred=setdiff(wetnodes_corr,wetnodes_pred)
-figure(1000); set(gcf,'Visible','on');
+figure(1000); set(gcf,'Visible','off');
 % pdeplot(vertices,boundaries,elements,'xydata',hna,'contour','on'), axis equal
 pdesurf(vertices,elements,hna)
 title(strcat('t = ',num2str(t), ' - Predictor'))
-pfig=figure(1000); set(gcf,'Visible','on');
+pfig=figure(1000); set(gcf,'Visible','off');
 % pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
 pdeplot(vertices,boundaries,elements,'zdata',hna.*chi_wet,'contour','on','zstyle','discontinuous')
 % pdesurf(vertices,elements,hna.*chi_wet)
 title(strcat('h_n at t = ',num2str(t), ' - Predictor'));
-print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.2f'),'apred','.eps'));
-print(pfig,'-djpeg',strcat(save_path,'hn_wet',num2str(t,'%.2f'),'apred','.jpeg'));
-saveas(pfig,strcat(save_path,'hn_wet',num2str(t,'%.2f'),'apred','.fig'));
-pfig=figure(1001); set(gcf,'Visible','on');
+%print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.jpeg'));
+saveas(pfig,strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.fig'));
+pfig=figure(1001); set(gcf,'Visible','off');
 pdeplot(vertices,boundaries,elements,'xydata',wdna,'contour','on'), axis equal
 title(strcat('wd_n at t = ',num2str(t), ' - Predictor'))%@<%
-print(pfig,'-deps',strcat(save_path,'wdn',num2str(t,'%.2f'),'apred','.eps'));
-print(pfig,'-djpeg',strcat(save_path,'wdn',num2str(t,'%.2f'),'apred','.jpeg'));
-saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.2f'),'apred','.fig'));
-pfig=figure(1002); %set(gcf,'Visible','on');
+% print(pfig,'-deps',strcat(save_path,'wdn',num2str(t,'%.3f'),'apred','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'wdn',num2str(t,'%.3f'),'apred','.jpeg'));
+saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.3f'),'apred','.fig'));
+pfig=figure(1002); set(gcf,'Visible','off');
 % pdeplot(vertices,boundaries,elements,'flowdata',[una vna],'flowstyle','arrow')
-% title(strcat('velocity field at t = ',num2str(t),' - Predictor'))
-% print(pfig,'-deps',strcat(save_path,'vel',num2str(t,'%.2f'),'apred','.eps'));
-% print(pfig,'-djpeg',strcat(save_path,'vel',num2str(t,'%.2f'),'apred','.jpeg'));
-% saveas(pfig,strcat(save_path,'vel',num2str(t,'%.2f'),'apred','.fig'));
-pdeplot(vertices,boundaries,elements,'flowdata',[chi_wet.*una chi_wet.*vna],'flowstyle','arrow')
+quiver(vertices(1,:)',vertices(2,:)',una,vna)
+title(strcat('velocity field at t = ',num2str(t),' - Predictor'))
+quiverscale(chi_wet.*una,chi_wet.*vna,gca)
+% print(pfig,'-deps',strcat(save_path,'vel',num2str(t,'%.3f'),'apred','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'vel',num2str(t,'%.3f'),'apred','.jpeg'));
+saveas(pfig,strcat(save_path,'vel',num2str(t,'%.3f'),'apred','.fig'));
+close 1002
+pfig=figure(1002); set(gcf,'Visible','off');
+% pdeplot(vertices,boundaries,elements,'flowdata',[chi_wet.*una chi_wet.*vna],'flowstyle','arrow','mesh','on'); hold on; pdemesh(vertices,boundaries, elements);
+quiver(vertices(1,:)',vertices(2,:)',chi_wet.*una,chi_wet.*vna) %, hold on, pdemesh(vertices,boundaries,elements);
 title(strcat('velocity field of water at t = ',num2str(t),' - Predictor'))
-print(pfig,'-deps',strcat(save_path,'wetvel',num2str(t,'%.2f'),'apred','.eps'));
-print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.2f'),'apred','.jpeg'));
-saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.2f'),'apred','.fig'));
+quiverscale(chi_wet.*una,chi_wet.*vna,gca)
+% print(pfig,'-deps',strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.jpeg'));
+saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.fig'));
 
 pause;
-
+close 1002
 
 % Corrector
 
@@ -691,9 +700,6 @@ disp('min(u) min(v) min(c)')
 
 wdn = cn.^2/4./g;
 hn = wdn + h0;
-
-% Salvataggio
-save(strcat(save_path,num2str(t,'%.2f'),'.mat'),'un','vn','cn');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % POST PROCESSING
@@ -866,20 +872,41 @@ dryed_corr=setdiff(wetnodes_pred,wetnodes_corr)
 wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
 dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
 
-pfig=figure(1000); set(gcf,'Visible','on');
+pfig=figure(1000); set(gcf,'Visible','off');
 % pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
 pdeplot(vertices,boundaries,elements,'zdata',hn.*chi_wet,'contour','on','zstyle','discontinuous')
 % pdesurf(vertices,elements,hn.*chi_wet)
 title(strcat('h_n at t = ',num2str(t), ' - Corrector'))
-print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.2f'),'bcorr','.eps'));
-print(pfig,'-djpeg',strcat(save_path,'hn_wet',num2str(t,'%.2f'),'bcorr','.jpeg'));
-saveas(pfig,strcat(save_path,'hn_wet',num2str(t,'%.2f'),'bcorr','.fig'));
-pfig=figure(1001); set(gcf,'Visible','on');
+% print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'bcorr','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'bcorr','.jpeg'));
+saveas(pfig,strcat(save_path,'hn_wet',num2str(t,'%.3f'),'bcorr','.fig'));
+pfig=figure(1001); set(gcf,'Visible','off');
 pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
 title(strcat('wd_n at t = ',num2str(t), ' - Corrector'))
-print(pfig,'-deps',strcat(save_path,'wdn',num2str(t,'%.2f'),'bcorr','.eps'));
-print(pfig,'-djpeg',strcat(save_path,'wdn',num2str(t,'%.2f'),'bcorr','.jpeg'));
-saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.2f'),'bcorr','.fig'));
+% print(pfig,'-deps',strcat(save_path,'wdn',num2str(t,'%.3f'),'bcorr','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'wdn',num2str(t,'%.3f'),'bcorr','.jpeg'));
+saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.3f'),'bcorr','.fig'));
+pfig=figure(1002); set(gcf,'Visible','off');
+% pdeplot(vertices,boundaries,elements,'flowdata',[una vna],'flowstyle','arrow')
+quiver(vertices(1,:)',vertices(2,:)',un,vn)
+title(strcat('velocity field at t = ',num2str(t),' - Corrector'))
+quiverscale(chi_wet.*un,chi_wet.*vn,gca)
+% print(pfig,'-deps',strcat(save_path,'vel',num2str(t,'%.3f'),'bcorr','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'vel',num2str(t,'%.3f'),'bcorr','.jpeg'));
+saveas(pfig,strcat(save_path,'vel',num2str(t,'%.3f'),'bcorr','.fig'));
+close 1002
+pfig=figure(1002); set(gcf,'Visible','off');
+% pdeplot(vertices,boundaries,elements,'flowdata',[chi_wet.*una chi_wet.*vna],'flowstyle','arrow','mesh','on'); hold on; pdemesh(vertices,boundaries, elements);
+quiver(vertices(1,:)',vertices(2,:)',chi_wet.*un,chi_wet.*vn) %, hold on, pdemesh(vertices,boundaries,elements);
+title(strcat('velocity field of water at t = ',num2str(t),' - Corrector'))
+quiverscale(chi_wet.*un,chi_wet.*vn,gca)
+% print(pfig,'-deps',strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.eps'));
+print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.jpeg'));
+saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.fig'));
+
+pause;
+close 1002
+
 % % attento = max(abs((vn)))
 % pause(0.2)
 % if mod(t/dt,10)==0
@@ -895,7 +922,10 @@ saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.2f'),'bcorr','.fig'));
 % comptime(p)=toc
 % save 'Q_out.mat' Q_out
 
-pause
+% Salvataggio
+save(strcat(save_path,num2str(t,'%.3f'),'.mat'),'una','vna','cna','un','vn','cn','wetted_pred','wetted_corr','dryed_pred','dryed_corr');
+
+% pause
 end % end of time loop
 
 % for i=1:t/dt

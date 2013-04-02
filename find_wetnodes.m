@@ -5,6 +5,8 @@ function [ wetnodes ] = find_wetnodes(elements,c,g,tol,phase)
 % g = gravity acceleration
 % phase =   'pred' 1st step of predictor-corrector algorithm
 %           'corr' 2nd step of predictor-corrector algorithm
+% NB: A node is said to be wet if it's a vertice of a triangle that has 
+%     wd > tol in at least 2 vertices
 
 switch phase
     case 'pred',
