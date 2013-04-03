@@ -3,11 +3,6 @@
 function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,tstart,theta)
 
 % our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,tstart,theta)
-% This is the "main" of the code for SWE
-%
-% tspan:  a vector of 3 entries: initial time, final time, n of time steps
-% tstart: "real" initial time (can also be different from tspan(1))
-% theta:  for theta-method
 
 %@>% = inizio modifica Bulgarello-Fumagalli
 %@<% = fine modifica Bulgarello-Fumagalli
@@ -17,8 +12,8 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 
 %<g0<   This kind of comment is for the rows to be uncommented if you want
 %       to switch off gravity on the front
-%       NB: this has been done only minimally: if you want to do that, you
-%           have to complete the work...
+%       NB: this has been done only in a minimum part: if you want to do 
+%           that, you have to complete the work...
 
 % h0 = bottom elevation
 % wd = water depth
@@ -464,12 +459,13 @@ for t = tspan(1)+dt:dt:tspan(2)
     %            cna(nodes0,1) = cDir_in;
             end
             if isDry %gestione dei nodi dry: poniamo tutto a 0
+               % Here the rows with %%% are for imposing c=0 on the front
     %             rhs(2*ndof_v+frontwettednodes) =  2*(g*wdtol./2).^0.5;
     %             aglo(2*ndof_v+frontwettednodes,:) = identita(2*ndof_v+frontwettednodes,:);
-%<hf<                ctol=2*(g*wdtol./2).^0.5;
+%%%                ctol=2*(g*wdtol./2).^0.5;
     %             chi_frontwet = zeros(ndof_c,1); chi_frontwet(frontwettednodes)=1;
-%<hf<                rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet];
-%<hf<                rhs = rhs(dof,1) - aglo(dof,dof)*rilev;
+%%%                rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet];
+%%%                rhs = rhs(dof,1) - aglo(dof,dof)*rilev;
     %             rhs(drydof) = 0;
                 %una(drynodes_uv,1) = 0;
                 %vna(drynodes_uv,1) = 0;
@@ -532,7 +528,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     wdna = cna.^2/4./g;
     hna = wdna + h0;
     wdna_el=pdeintrp(vertices, elements, wdna);
-    vol_pred=sum(wdna_el.*ar)
+    vol=sum(wdna_el.*ar)
     
     % Wet nodes - Predictor
     wetted_pred=setdiff(wetnodes_pred,wetnodes_corr)
@@ -643,12 +639,13 @@ for t = tspan(1)+dt:dt:tspan(2)
 %            cn(nodes0,1) = cDir_in;
         end
         if isDry %gestione dei nodi dry: poniamo tutto a 0
+            % Here the rows with %%% are for imposing c=0 on the front
 %             rhs(2*ndof_v+frontwettednodes) =  2;%*(g*wdtol./2).^0.5;
 %             aglo(2*ndof_v+frontwettednodes,:) = identita(2*ndof_v+frontwettednodes,:);
-%<hf<            ctol=2*(g*wdtol./2).^0.5;
+%%%            ctol=2*(g*wdtol./2).^0.5;
 %             chi_frontwet = zeros(ndof_c,1); chi_frontwet(frontwettednodes)=1;
-%<hf<            rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet];
-%<hf<            rhs = rhs - aglo(dof,dof)*rilev;
+%%%            rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet];
+%%%            rhs = rhs - aglo(dof,dof)*rilev;
 %             rhs(drydof) = 0;
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
@@ -696,7 +693,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     wdn = cn.^2/4./g;
     hn = wdn + h0;
     wdn_el=pdeintrp(vertices, elements, wdn);
-    vol_corr=sum(wdn_el.*ar)
+    vol=sum(wdn_el.*ar)
     
     % Wet nodes - Corrector
     wetted_corr=setdiff(wetnodes_corr,wetnodes_pred)
@@ -890,7 +887,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     % save 'Q_out.mat' Q_out
 
     % ----------SALVATAGGIO------------
-    save(strcat(save_path,num2str(t,'%.3f'),'.mat'),'una','vna','cna','un','vn','cn','wetted_pred','wetted_corr','dryed_pred','dryed_corr','vol_pred','vol_corr');
+    save(strcat(save_path,num2str(t,'%.3f'),'.mat'),'una','vna','cna','un','vn','cn','wetted_pred','wetted_corr','dryed_pred','dryed_corr');
     % pause
 end % end of time loop
 
