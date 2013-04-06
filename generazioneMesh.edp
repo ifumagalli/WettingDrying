@@ -1,8 +1,8 @@
 int N=24;
-mesh Th = square(N,N);
+mesh Th = square(8*N,N);
 plot(Th);
 
-Th=movemesh(Th,[5*x-2.5,5*y-2.5]);
+Th=movemesh(Th,[40*x-20,5*y-2.5]);
 plot(Th);
 
-savemesh(Th,"square24x24.msh");
+savemesh(Th,"rectang40x5_N192x24.msh");

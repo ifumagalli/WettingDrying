@@ -138,6 +138,15 @@ f3 = 0.*f1;
 % l2=lk;
 % l1=sk.*lk;
 
+% mesh utilities
+ymin = min(vertices(2,:));
+idxs_ymin = find(vertices(2,:) == ymin);
+ymax = max(vertices(2,:));
+idxs_ymax = find(vertices(2,:) == ymax);
+[~,idx] = min(abs(vertices(2,:)-(ymax+ymin)/2));
+ymed = vertices(2,idx);
+idxs_ymed = find(vertices(2,:) == ymed);
+
 % -----------INITIAL CONDITIONS------------
 
 disp('Initial conditions')
@@ -155,7 +164,7 @@ hold on
 pdesurf(vertices,elements,h0)
 hold off
 pfig=figure(1001);
-set(gcf,'Visible','on');
+set(gcf,'Visible','off');
 pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
 title('Initial condition - water depth only')
 %print(pfig,'-deps',strcat(save_path,'AAAinitial','.eps'));
@@ -428,7 +437,7 @@ for t = tspan(1)+dt:dt:tspan(2)
 
         [aglo,rhs] = assem_mat_vect_gio_stab_i(vertices,elements,boundaries,g,dt,un,vn,cn,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
             ,unoold,vnoold,cnoold,nx_nodes,ny_nodes); 
-        figure(101), set(gcf,'Visible','on');  spy(aglo); title('matrice aglo')
+        figure(101), set(gcf,'Visible','off');  spy(aglo); title('matrice aglo')
         % if ~isempty(nodesxy)
         %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
         %                                  nnzxy);
@@ -466,17 +475,17 @@ for t = tspan(1)+dt:dt:tspan(2)
             if isDry %gestione dei nodi dry: poniamo tutto a 0
     %             rhs(2*ndof_v+frontwettednodes) =  2*(g*wdtol./2).^0.5;
     %             aglo(2*ndof_v+frontwettednodes,:) = identita(2*ndof_v+frontwettednodes,:);
-%<hf<                ctol=2*(g*wdtol./2).^0.5;
+                ctol=2*(g*wdtol./2).^0.5;  %<hf<
     %             chi_frontwet = zeros(ndof_c,1); chi_frontwet(frontwettednodes)=1;
-%<hf<                rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet];
-%<hf<                rhs = rhs(dof,1) - aglo(dof,dof)*rilev;
+                rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet]; %<hf<
+                rhs = rhs(dof,1) - aglo(dof,dof)*rilev; %<hf<
     %             rhs(drydof) = 0;
                 %una(drynodes_uv,1) = 0;
                 %vna(drynodes_uv,1) = 0;
                 %cna(drynodes_c,1) = 0;
                 % disp('matrice aglo');
                 % aglo
-                figure(102), set(gcf,'Visible','on');  spy(aglo); title('matrice con Dirichlet')
+                figure(102), set(gcf,'Visible','off');  spy(aglo); title('matrice con Dirichlet')
     %             disp('min e max: eigs(aglo)')
     %             min(eigs(aglo,3,0)), max(eigs(aglo,3))
                 disp('condest(aglo)')
@@ -486,11 +495,11 @@ for t = tspan(1)+dt:dt:tspan(2)
     %             aglo(drydof,drydof) = 1.e+10*aglo(drydof,drydof);
                 % disp('matrice con imposizione su drydof');
                 % aglo
-                figure(103); set(gcf,'Visible','on');  spy(aglo); title('matrice con imposizione su drydof');
+                figure(103); set(gcf,'Visible','off');  spy(aglo); title('matrice con imposizione su drydof');
                 % disp('matrice che risolveremo');
                 % aglo(dof,dof)
                 pfig=figure(104);
-                set(gcf,'Visible','on');  spy(aglo(ourdof,ourdof)); title('matrice che risolveremo');
+                set(gcf,'Visible','off');  spy(aglo(ourdof,ourdof)); title('matrice che risolveremo');
                 %print(pfig,'-deps',strcat(save_path,'matr',num2str(t,'%.3f'),'.eps'));
                 print(pfig,'-djpeg',strcat(save_path,'matr',num2str(t,'%.3f'),'.jpeg'));
                 saveas(pfig,strcat(save_path,'matr',num2str(t,'%.3f'),'.fig'));
@@ -537,13 +546,13 @@ for t = tspan(1)+dt:dt:tspan(2)
     % Wet nodes - Predictor
     wetted_pred=setdiff(wetnodes_pred,wetnodes_corr)
     dryed_pred=setdiff(wetnodes_corr,wetnodes_pred)
-    figure(1000); set(gcf,'Visible','on');
+    figure(1000); set(gcf,'Visible','off');
     
     % Plot - Predictor
     % pdeplot(vertices,boundaries,elements,'xydata',hna,'contour','on'), axis equal
     pdesurf(vertices,elements,hna)
     title(strcat('t = ',num2str(t), ' - Predictor'))
-    pfig=figure(1000); set(gcf,'Visible','on');
+    pfig=figure(1000); set(gcf,'Visible','off');
     % pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
     pdeplot(vertices,boundaries,elements,'zdata',hna.*chi_wet,'contour','on','zstyle','discontinuous')
     % pdesurf(vertices,elements,hna.*chi_wet)
@@ -551,13 +560,13 @@ for t = tspan(1)+dt:dt:tspan(2)
     %print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.eps'));
     print(pfig,'-djpeg',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.jpeg'));
     saveas(pfig,strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.fig'));
-    pfig=figure(1001); set(gcf,'Visible','on');
+    pfig=figure(1001); set(gcf,'Visible','off');
     pdeplot(vertices,boundaries,elements,'xydata',wdna,'contour','on'), axis equal
     title(strcat('wd_n at t = ',num2str(t), ' - Predictor'))%@<%
     % print(pfig,'-deps',strcat(save_path,'wdn',num2str(t,'%.3f'),'apred','.eps'));
     print(pfig,'-djpeg',strcat(save_path,'wdn',num2str(t,'%.3f'),'apred','.jpeg'));
     saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.3f'),'apred','.fig'));
-    pfig=figure(1002); set(gcf,'Visible','on');
+    pfig=figure(1002); set(gcf,'Visible','off');
     % pdeplot(vertices,boundaries,elements,'flowdata',[una vna],'flowstyle','arrow')
     quiver(vertices(1,:)',vertices(2,:)',una,vna)
     title(strcat('velocity field at t = ',num2str(t),' - Predictor'))
@@ -566,7 +575,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     print(pfig,'-djpeg',strcat(save_path,'vel',num2str(t,'%.3f'),'apred','.jpeg'));
     saveas(pfig,strcat(save_path,'vel',num2str(t,'%.3f'),'apred','.fig'));
     close 1002
-    pfig=figure(1002); set(gcf,'Visible','on');
+    pfig=figure(1002); set(gcf,'Visible','off');
     % pdeplot(vertices,boundaries,elements,'flowdata',[chi_wet.*una chi_wet.*vna],'flowstyle','arrow','mesh','on'); hold on; pdemesh(vertices,boundaries, elements);
     quiver(vertices(1,:)',vertices(2,:)',chi_wet.*una,chi_wet.*vna) %, hold on, pdemesh(vertices,boundaries,elements);
     title(strcat('velocity field of water at t = ',num2str(t),' - Predictor'))
@@ -574,6 +583,14 @@ for t = tspan(1)+dt:dt:tspan(2)
     % print(pfig,'-deps',strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.eps'));
     print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.jpeg'));
     saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.fig'));
+    
+    pfig=figure(1100); set(gcf,'Visible','off');
+    plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax),vertices(1,idxs_ymed),hna(idxs_ymed))
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d')
+    title(strcat('h_n at t = ',num2str(t), ' - Predictor'));
+    %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.eps'));
+    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg'));
+    saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.fig'));
 
     pause;
     close 1002
@@ -645,10 +662,10 @@ for t = tspan(1)+dt:dt:tspan(2)
         if isDry %gestione dei nodi dry: poniamo tutto a 0
 %             rhs(2*ndof_v+frontwettednodes) =  2;%*(g*wdtol./2).^0.5;
 %             aglo(2*ndof_v+frontwettednodes,:) = identita(2*ndof_v+frontwettednodes,:);
-%<hf<            ctol=2*(g*wdtol./2).^0.5;
+            ctol=2*(g*wdtol./2).^0.5; %<hf<
 %             chi_frontwet = zeros(ndof_c,1); chi_frontwet(frontwettednodes)=1;
-%<hf<            rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet];
-%<hf<            rhs = rhs - aglo(dof,dof)*rilev;
+            rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet]; %<hf<
+            rhs = rhs - aglo(dof,dof)*rilev; %<hf<
 %             rhs(drydof) = 0;
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
@@ -702,12 +719,8 @@ for t = tspan(1)+dt:dt:tspan(2)
     wetted_corr=setdiff(wetnodes_corr,wetnodes_pred)
     dryed_corr=setdiff(wetnodes_pred,wetnodes_corr)
 
-    % Wet nodes - Predictor and Corrector
-    wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
-    dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
-
     % Plot - Corrector
-    pfig=figure(1000); set(gcf,'Visible','on');
+    pfig=figure(1000); set(gcf,'Visible','off');
     % pdeplot(vertices,boundaries,elements,'xydata',hn.*chi_wet,'contour','on'), axis equal
     pdeplot(vertices,boundaries,elements,'zdata',hn.*chi_wet,'contour','on','zstyle','discontinuous')
     % pdesurf(vertices,elements,hn.*chi_wet)
@@ -715,13 +728,13 @@ for t = tspan(1)+dt:dt:tspan(2)
     % print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'bcorr','.eps'));
     print(pfig,'-djpeg',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'bcorr','.jpeg'));
     saveas(pfig,strcat(save_path,'hn_wet',num2str(t,'%.3f'),'bcorr','.fig'));
-    pfig=figure(1001); set(gcf,'Visible','on');
+    pfig=figure(1001); set(gcf,'Visible','off');
     pdeplot(vertices,boundaries,elements,'xydata',wdn,'contour','on'), axis equal
     title(strcat('wd_n at t = ',num2str(t), ' - Corrector'))
     % print(pfig,'-deps',strcat(save_path,'wdn',num2str(t,'%.3f'),'bcorr','.eps'));
     print(pfig,'-djpeg',strcat(save_path,'wdn',num2str(t,'%.3f'),'bcorr','.jpeg'));
     saveas(pfig,strcat(save_path,'wdn',num2str(t,'%.3f'),'bcorr','.fig'));
-    pfig=figure(1002); set(gcf,'Visible','on');
+    pfig=figure(1002); set(gcf,'Visible','off');
     % pdeplot(vertices,boundaries,elements,'flowdata',[una vna],'flowstyle','arrow')
     quiver(vertices(1,:)',vertices(2,:)',un,vn)
     title(strcat('velocity field at t = ',num2str(t),' - Corrector'))
@@ -730,7 +743,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     print(pfig,'-djpeg',strcat(save_path,'vel',num2str(t,'%.3f'),'bcorr','.jpeg'));
     saveas(pfig,strcat(save_path,'vel',num2str(t,'%.3f'),'bcorr','.fig'));
     close 1002
-    pfig=figure(1002); set(gcf,'Visible','on');
+    pfig=figure(1002); set(gcf,'Visible','off');
     % pdeplot(vertices,boundaries,elements,'flowdata',[chi_wet.*una chi_wet.*vna],'flowstyle','arrow','mesh','on'); hold on; pdemesh(vertices,boundaries, elements);
     quiver(vertices(1,:)',vertices(2,:)',chi_wet.*un,chi_wet.*vn) %, hold on, pdemesh(vertices,boundaries,elements);
     title(strcat('velocity field of water at t = ',num2str(t),' - Corrector'))
@@ -739,6 +752,19 @@ for t = tspan(1)+dt:dt:tspan(2)
     print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.jpeg'));
     saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.fig'));
 
+    pfig=figure(1100); set(gcf,'Visible','off');
+    plot(vertices(1,idxs_ymin),hn(idxs_ymin),vertices(1,idxs_ymax),hn(idxs_ymax),vertices(1,idxs_ymed),hn(idxs_ymed))
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d')
+    title(strcat('h_n at t = ',num2str(t), ' - Corrector'));
+    %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps'));
+    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg'));
+    saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig'));
+
+    % Wet nodes - Predictor and Corrector
+    wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
+    dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
+
+    disp(strcat(' --- End of time step t = ',num2str(t),' ---'))
     pause;
     close 1002
 
