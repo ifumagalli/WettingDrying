@@ -54,8 +54,8 @@ x1 = p(1,i1);
 x2 = p(1,i2);
 x3 = p(1,i3);
 xqq = phiq(1,:)'*x1 + phiq(2,:)'*x2 + phiq(3,:)'*x3;
-wdqq = ones(nq,nt);     % Stoker
-% wdqq = zeros(nq,nt);    % Ritter
+% wdqq = 1.e-2*ones(nq,nt);     % Stoker
+wdqq = zeros(nq,nt);    % Ritter
 [i,j] = find(xqq<=0);
 wdqq(i,j) = 3;
 

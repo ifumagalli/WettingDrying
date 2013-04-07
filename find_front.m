@@ -1,4 +1,4 @@
-function frontnodes = find_front(elements,chi_wet)
+function [frontnodes] = find_front(elements,chi_wet)
 
 % Finds the advancing shoreline nodes, given the characteristic function of
 % wet nodes: a node is said to belong to the shoreline if it is a vertice
@@ -17,7 +17,8 @@ for i=1:max(size(elements))
 %         frontnodes(3*i-1) = elements(2,i);
 %         frontnodes(3*i) = elements(3,i); 
     end
-    frontnodes = unique(frontnodes);
 end
+
+frontnodes = unique(frontnodes);
 
 end

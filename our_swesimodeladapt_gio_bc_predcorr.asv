@@ -20,6 +20,9 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 %       NB: this has been done only minimally: if you want to do that, you
 %           have to complete the work...
 
+%<StRi< This kind of comment is for the rows to be uncommented if you want
+%       to study Stoker/Ritter problem
+
 % h0 = bottom elevation
 % wd = water depth
 % h = h0+wd =total depth
@@ -155,6 +158,9 @@ wdtol = wdtol*max(wdin) % so that we have a relative tolerance
 size(wdin), size(h0)
 assert(all(size(wdin)==size(h0)));
 hn = wdin + h0; % height w.r.t. the reference plane
+hl = hn(1); hr = hn(end); %<StRi<
+    % initial heigths at left/right: we presume that the 1st/last vertice
+    % is at the left/right side of the mesh
 wdn = wdin;
 cn = cin;
 wdn_el = pdeintrp(vertices,elements,wdn); % wdn at the center of the (nodes -> centers of the cells)
@@ -392,7 +398,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     tic
         % Find wetnodes (da tenere)
         dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
-        wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred')
+        wetnodes = find_wetnodes(elements,cn,g,wdtol,'pred');
         wetnodes_pred=wetnodes;
         wetdof_uv = intersect(wetnodes,dof_uv_tot); nwetdof_uv = length(wetdof_uv);
         wetdof_c = intersect(wetnodes,dof_c_tot);   nwetdof_c = length(wetdof_c);
@@ -475,10 +481,10 @@ for t = tspan(1)+dt:dt:tspan(2)
             if isDry %gestione dei nodi dry: poniamo tutto a 0
     %             rhs(2*ndof_v+frontwettednodes) =  2*(g*wdtol./2).^0.5;
     %             aglo(2*ndof_v+frontwettednodes,:) = identita(2*ndof_v+frontwettednodes,:);
-                ctol=2*(g*wdtol./2).^0.5;  %<hf<
+%                 ctol=2*(g*wdtol./2).^0.5;  %<hf<
     %             chi_frontwet = zeros(ndof_c,1); chi_frontwet(frontwettednodes)=1;
-                rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet]; %<hf<
-                rhs = rhs(dof,1) - aglo(dof,dof)*rilev; %<hf<
+%                 rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet]; %<hf<
+%                 rhs = rhs(dof,1) - aglo(dof,dof)*rilev; %<hf<
     %             rhs(drydof) = 0;
                 %una(drynodes_uv,1) = 0;
                 %vna(drynodes_uv,1) = 0;
@@ -584,13 +590,16 @@ for t = tspan(1)+dt:dt:tspan(2)
     print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.jpeg'));
     saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.fig'));
     
-    pfig=figure(1100); set(gcf,'Visible','off');
-    plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax),vertices(1,idxs_ymed),hna(idxs_ymed))
-    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d')
-    title(strcat('h_n at t = ',num2str(t), ' - Predictor'));
-    %print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.eps'));
-    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg'));
-    saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.fig'));
+    pfig=figure(1100); set(gcf,'Visible','off'); %<StRi<
+    plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax),vertices(1,idxs_ymed),hna(idxs_ymed)) %<StRi<
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d') %<StRi<
+    title(strcat('h_n at t = ',num2str(t), ' - Predictor')); %<StRi<
+    %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
+    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
+    saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
+
+    temp = intersect(frontwettednodes,idxs_ymed); % it might happen that length(temp)>1 because of the mesh
+    frontvelocity_c(p1) = (vertices(1,temp(1)) - 0) / t;
 
     pause;
     close 1002
@@ -602,7 +611,7 @@ for t = tspan(1)+dt:dt:tspan(2)
         % Find wetnodes (da tenere)
         clear wetnodes
         dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
-        wetnodes = find_wetnodes(elements,cna,g,wdtol,'corr')
+        wetnodes = find_wetnodes(elements,cna,g,wdtol,'corr');
         wetnodes_corr=wetnodes;
         wetdof_uv = intersect(wetnodes,dof_uv_tot); nwetdof_uv = length(wetdof_uv);
         wetdof_c = intersect(wetnodes,dof_c_tot);   nwetdof_c = length(wetdof_c);
@@ -662,10 +671,10 @@ for t = tspan(1)+dt:dt:tspan(2)
         if isDry %gestione dei nodi dry: poniamo tutto a 0
 %             rhs(2*ndof_v+frontwettednodes) =  2;%*(g*wdtol./2).^0.5;
 %             aglo(2*ndof_v+frontwettednodes,:) = identita(2*ndof_v+frontwettednodes,:);
-            ctol=2*(g*wdtol./2).^0.5; %<hf<
+%             ctol=2*(g*wdtol./2).^0.5; %<hf<
 %             chi_frontwet = zeros(ndof_c,1); chi_frontwet(frontwettednodes)=1;
-            rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet]; %<hf<
-            rhs = rhs - aglo(dof,dof)*rilev; %<hf<
+%             rilev = [zeros(ndof_v*2,1) ; ctol*chi_frontwet]; %<hf<
+%             rhs = rhs - aglo(dof,dof)*rilev; %<hf<
 %             rhs(drydof) = 0;
             %una(drynodes_uv,1) = 0;
             %vna(drynodes_uv,1) = 0;
@@ -709,19 +718,16 @@ for t = tspan(1)+dt:dt:tspan(2)
     % rhs
     %@<%
 
-    % Aggiornamento variabili altezza e controllo conservazione della massa - Corrector
+    % Aggiornamento variabili altezza e controlli - Corrector
     wdn = cn.^2/4./g;
     hn = wdn + h0;
     wdn_el=pdeintrp(vertices, elements, wdn);
     vol_corr=sum(wdn_el.*ar)
+    [u_ex,h_ex,frontvelocity_ex(p1)] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[t t 0],h0,hl,hr,g); %<StRi<
     
     % Wet nodes - Corrector
     wetted_corr=setdiff(wetnodes_corr,wetnodes_pred)
     dryed_corr=setdiff(wetnodes_pred,wetnodes_corr)
-
-    % Wet nodes - Predictor and Corrector
-    wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
-    dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
 
     % Plot - Corrector
     pfig=figure(1000); set(gcf,'Visible','off');
@@ -756,14 +762,30 @@ for t = tspan(1)+dt:dt:tspan(2)
     print(pfig,'-djpeg',strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.jpeg'));
     saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.fig'));
 
-    figure(1001
-    plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax),vertices(1,idxs_ymed),hna(idxs_ymed))
-    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d')
-    title(strcat('h_n at t = ',num2str(t), ' - Predictor'));
-    %print(pfig,'-deps',strcat(save_path,'hn_wet',num2str(t,'%.3f'),'apred','.eps'));
-    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg'));
-    saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.fig'));
+    pfig=figure(1100); set(gcf,'Visible','off');    %<StRi<
+    plot(vertices(1,idxs_ymin),hn(idxs_ymin),vertices(1,idxs_ymax),hn(idxs_ymax), ... %<StRi<
+        vertices(1,idxs_ymed),hn(idxs_ymed),vertices(1,idxs_ymed),h_ex(idxs_ymed)) %<StRi<
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution') %<StRi<
+    title(strcat('h_n at t = ',num2str(t), ' - Corrector')); %<StRi<
+    %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
+    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
+    saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
     
+    pfig=figure(1101); set(gcf,'Visible','off'); %<StRi<
+    plot(vertices(1,idxs_ymed),hn(idxs_ymed)-h_ex(idxs_ymed)) %<StRi<
+    title(strcat('height absolute error at t = ',num2str(t))); %<StRi<
+    %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection_error',num2str(t,'%.3f'),'.eps')); %<StRi<
+    print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection_error',num2str(t,'%.3f'),'.jpeg')); %<StRi<
+    saveas(pfig,strcat(save_path,'hn_wet_ysection_error',num2str(t,'%.3f'),'.fig')); %<StRi<
+
+    % Wet nodes - Predictor and Corrector
+    wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
+    dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
+
+    temp = intersect(frontwettednodes,idxs_ymed); % it might happen that length(temp)>1 because of the mesh
+    frontvelocity_corr(p1) = (vertices(1,temp(1)) - 0) / t;
+
+    disp(strcat(' --- End of time step t =  ',num2str(t),' ---'))
     pause;
     close 1002
 
@@ -927,5 +949,23 @@ end % end of time loop
 save(strcat(save_path,'Vol.mat'), 'Vol');
 % save 'solchange.mat' solution_change
 % save 'Q_in.mat' Q_in
+
+% Plots against time
+tvec = linspace(tspan(1),tspan(2),tspan(3)+1);
+
+pfig=figure(1); set(gcf,'Visible','on');
+plot(tvec,Vol)
+xlabel('t [s]'); ylabel('volume [m^3]')
+%print(pfig,'-deps',strcat(save_path,'volume.eps'));
+print(pfig,'-djpeg',strcat(save_path,'volume.jpeg'));
+saveas(pfig,strcat(save_path,'volume.fig'));
+
+pfig=figure(2); set(gcf,'Visible','on');
+plot(tvec,frontvelocity_pred,'.k',tvec,frontvelocity_corr,tvec,frontvelocity_ex,'--r')
+xlabel('t [s]'); ylabel('front velocity [m/s]')
+legend('predictor','corrector','exact')
+%print(pfig,'-deps',strcat(save_path,'frontvelocity.eps'));
+print(pfig,'-djpeg',strcat(save_path,'frontvelocity.jpeg'));
+saveas(pfig,strcat(save_path,'frontvelocity.fig'));
 
 return
