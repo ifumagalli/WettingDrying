@@ -1,7 +1,7 @@
  EXEC of the plot  : ffglut.exe
 -- FreeFem++ v  3.160000 (date Fri Oct  7 19:29:19 GMT 2011)
  Load: lg_fem lg_mesh lg_mesh3 eigenvalue
-    1 : int N=24;
+    1 : int N=6;
  *** Warning  The identifier N hide a Global identifier
  
     2 : mesh Th = square(8*N,N);
@@ -10,11 +10,12 @@
     5 : Th=movemesh(Th,[40*x-20,5*y-2.5]);
     6 : plot(Th);
     7 :
-    8 : savemesh(Th,"rectang40x5_N192x24.msh"); sizestack + 1024 =1176  ( 152 )
+    8 : savemesh(Th,"rectang40x5_N48x6.msh"); sizestack + 1024 =1176  ( 152 )
  
-  -- Square mesh : nb vertices  =4825 ,  nb triangles = 9216 ,  nb boundary edges 432
+  -- Square mesh : nb vertices  =343 ,  nb triangles = 576 ,  nb boundary edges
+108
   number of required edges : 0
-times: compile 0.023s, execution 0.25s,  mpirank:0
+times: compile 0.089s, execution 0.561s,  mpirank:0
  CodeAlloc : nb ptr  2243,  size :151448 mpirank: 0
 Bien: On a fini Normalement
  try getConsole C:\Users\Ivan\Documents\GitHub\WettingDrying\generazioneMesh.edp 

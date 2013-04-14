@@ -46,7 +46,7 @@ ho_k = h_k; % ??? unused
 h_k_m=max(h_k)
 
 % Threshold wet nodes
-wdtol = 1e-3; % it will be: wdtol = wdtol*max(wdin)
+wdtol = 1e-6; % it will be: wdtol = wdtol*max(wdin)
 deltat_deltax = dt/h_k_m % ??? unused
 [ar]=pdetrg(vertices,elements); % areas: [AR,A1,A2,A3]=pdetrg(P,T) returns the area of each triangle in AR
 
@@ -81,6 +81,7 @@ yqq = phiq(1,:)'*y(it1)' + phiq(2,:)'*y(it2)' + phiq(3,:)'*y(it3)';
 % h0 = 0.1*(x.^2+y.^2);
 % b = abs(max(y)-min(y)); % ??? unused
 h0 = zeros(size(x));
+% h0 = 1.e-2 * (max(max(x))-x);
 
 % Termine noto pendenza (rhs slope)
 [f_x,f_y]=pdegrad(vertices,elements,h0); %[UX,UY]=pdegrad(P,T,U) returns grad(u) evaluated at the center of each triangle.
@@ -153,14 +154,19 @@ idxs_ymed = find(vertices(2,:) == ymed);
 % -----------INITIAL CONDITIONS------------
 
 disp('Initial conditions')
-[un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0,save_path);
-wdtol = wdtol*max(wdin) % so that we have a relative tolerance
-size(wdin), size(h0)
-assert(all(size(wdin)==size(h0)));
-hn = wdin + h0; % height w.r.t. the reference plane
-hl = hn(1); hr = hn(end); %<StRi<
+% % % [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0,save_path);
+% % % hn = wdin + h0; % height w.r.t. the reference plane
+% % % hl = hn(1); hr = hn(end); %<StRi<
     % initial heigths at left/right: we presume that the 1st/last vertice
     % is at the left/right side of the mesh
+hl = 3; hr = 0; %<StRi<
+[un,hn,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[tstart tstart 0],h0,hl,hr,g,1); %<StRi<
+vn = 1.e-16*ones(size(un)); %<StRi<
+    % if we put zeros we have cond(matrix_to_be_solved) = infty
+wdin = (hn-h0).*(hn-h0 > 0); %<StRi<
+cin = 2*(g*wdin).^0.5; %<StRi<
+wdtol = wdtol*max(wdin) % so that we have a relative tolerance
+assert(all(size(wdin)==size(h0)));
 wdn = wdin;
 cn = cin;
 wdn_el = pdeintrp(vertices,elements,wdn); % wdn at the center of the (nodes -> centers of the cells)
@@ -176,7 +182,13 @@ title('Initial condition - water depth only')
 %print(pfig,'-deps',strcat(save_path,'AAAinitial','.eps'));
 print(pfig,'-djpeg',strcat(save_path,'AAAinitial','.jpeg'));
 saveas(pfig,strcat(save_path,'AAAinitial','.fig'));
-pause;
+save(strcat(save_path,'init.mat'),'un','vn','cn');
+% % % pfig=figure(1000); pdesurf(vertices,elements,h0); hold on; pdesurf(vertices,elements,hn);
+% % % title('Initial condition')
+% % % print(pfig,'-deps',strcat(save_path,'AAAinitial_both','.eps'));
+% % % print(pfig,'-djpeg',strcat(save_path,'AAAinitial_both','.jpeg'));
+% % % saveas(pfig,strcat(save_path,'AAAinitial_both','.fig'));
+% % % pause;
 % pdeplot(vertices,boundaries,elements,'zdata',hn)
 % hold on
 % pdesurf(vertices,elements,h0)
@@ -391,7 +403,7 @@ wetnodes_corr=[];
 for t = tspan(1)+dt:dt:tspan(2)
     t
     % p=int64(t/dt); % ??? unused
-    p1=int64(t/dt+1);
+    p1=int64((t-tspan(1))/dt+1);
 
     %@>%
     disp('Find wet nodes - predictor')
@@ -459,6 +471,8 @@ for t = tspan(1)+dt:dt:tspan(2)
 
     disp('Solving linear system')
     
+    [u_ex,h_ex,frontvelocity_ex(p1)] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[t t 0],h0,hl,hr,g,1); %<StRi<
+    
     % -----------PREDICTOR-------------
     uDir_in = [uDir_in0,uDir_in1];
     vDir_in = [vDir_in0,vDir_in1];
@@ -518,16 +532,18 @@ for t = tspan(1)+dt:dt:tspan(2)
     %             min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
             disp('condest(aglo), condest(aglo(wetdof,wetdof))')
                 condest(aglo), condest(aglo(wetdof,wetdof))
+
+            una(dry_uv_nodes,1) = 0;
+            vna(dry_uv_nodes,1) = 0;
+            cna(dry_c_nodes,1) = 0;
+
             temp = aglo(ourdof,ourdof)\rhs(ourdof); % system solution
             una(dof_uv_tot,1) = temp(1:ndof_v,1);
     %         una(wetdof_uv,1) = temp(1:nwetdof_uv,1);
-    %             una(dry_uv_nodes,1) = 0;
             vna(dof_uv_tot,1) = temp(ndof_v+1:2*ndof_v,1);
     %         vna(wetdof_uv,1) = temp(nwetdof_uv+1:2*nwetdof_uv,1);
-    %             vna(dry_uv_nodes,1) = 0;
-    %         cna(dof_c_tot,1) = temp(2*nwetdof_uv+1:end,1)
+    %         cna(dof_c_tot,1) = temp(2*ndof_v+1:end,1)
             cna(wetdof_c,1) = temp(2*ndof_v+1:end,1);
-                cna(dry_c_nodes,1) = 0;
         else
             temp = aglo\rhs;
             una(dof_v,1) = temp(1:ndof_v,1);
@@ -591,13 +607,14 @@ for t = tspan(1)+dt:dt:tspan(2)
     saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.fig'));
     
     pfig=figure(1100); set(gcf,'Visible','off'); %<StRi<
-    plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax),vertices(1,idxs_ymed),hna(idxs_ymed)) %<StRi<
-    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d') %<StRi<
+    plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax), ... %<StRi<
+         vertices(1,idxs_ymed),hna(idxs_ymed),vertices(1,idxs_ymed),h_ex(idxs_ymed)) %<StRi<
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution') %<StRi<
     title(strcat('h_n at t = ',num2str(t), ' - Predictor')); %<StRi<
     %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
     print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
     saveas(pfig,strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
-
+    
     temp = intersect(frontwettednodes,idxs_ymed); % it might happen that length(temp)>1 because of the mesh
     frontvelocity_pred(p1) = (vertices(1,temp(1)) - 0) / t;
 
@@ -629,7 +646,7 @@ for t = tspan(1)+dt:dt:tspan(2)
             % find_wetnodes because of their "neighbours"
 
         % Choosing the real dof's we are going to use
-        ourdof= setdiff(dof,2*ndof_v+dry_c_nodes);
+        ourdof = setdiff(dof,2*ndof_v+dry_c_nodes);
         % ourdof = [wetdof_uv,wetdof_uv+ndof_v,dof_c_tot+2*ndof_v]';
         % ourdof = setdiff(setdiff(dof,wetdof_uv),ndof_v+wetdof_uv);
         %15/11/2012% dof = wetdof;%veri dof %%% non mi piace, ma almeno non riscrivo tutto...
@@ -694,16 +711,16 @@ for t = tspan(1)+dt:dt:tspan(2)
 %             min(eigs(aglo(wetdof,wetdof),3,0)), max(eigs(aglo(wetdof,wetdof),3))
         disp('condest(aglo), condest(aglo(wetdof,wetdof))')
             condest(aglo), condest(aglo(wetdof,wetdof))
+        un(dry_uv_nodes,1) = 0;
+        vn(dry_uv_nodes,1) = 0;
+        cn(dry_c_nodes,1) = 0;
         temp = aglo(ourdof,ourdof)\rhs(ourdof); % system solution
         un(dof_uv_tot,1) = temp(1:ndof_v,1);
 %         un(wetdof_uv,1) = temp(1:nwetdof_uv,1);
-%             un(dry_uv_nodes,1) = 0;
         vn(dof_uv_tot,1) = temp(ndof_v+1:2*ndof_v,1);
 %         vn(wetdof_uv,1) = temp(nwetdof_uv+1:2*nwetdof_uv,1);
-%             vn(dry_uv_nodes,1) = 0;
-%         cn(dof_c_tot,1) = temp(2*nwetdof_uv+1:end,1);
+%         cn(dof_c_tot,1) = temp(2*ndof_v+1:end,1);
         cn(wetdof_c,1) = temp(2*ndof_v+1:end,1);
-            cn(dry_c_nodes,1) = 0;
     else
         temp = aglo\rhs;
         un(dof_v,1) = temp(1:ndof_uv_in,1);
@@ -723,7 +740,6 @@ for t = tspan(1)+dt:dt:tspan(2)
     hn = wdn + h0;
     wdn_el=pdeintrp(vertices, elements, wdn);
     vol_corr=sum(wdn_el.*ar)
-    [u_ex,h_ex,frontvelocity_ex(p1)] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[t t 0],h0,hl,hr,g,1); %<StRi<
     
     % Wet nodes - Corrector
     wetted_corr=setdiff(wetnodes_corr,wetnodes_pred)
@@ -937,7 +953,7 @@ for t = tspan(1)+dt:dt:tspan(2)
     % save 'Q_out.mat' Q_out
 
     % ----------SALVATAGGIO------------
-    save(strcat(save_path,num2str(t,'%.3f'),'.mat'),'una','vna','cna','un','vn','cn','wetted_pred','wetted_corr','dryed_pred','dryed_corr','vol_pred','vol_corr');
+    save(strcat(save_path,num2str(t,'%.3f'),'.mat'),'una','vna','cna','un','vn','cn','wetted_pred','wetted_corr','dryed_pred','dryed_corr','vol_pred','vol_corr','frontvelocity_pred','frontvelocity_corr');
     % pause
 end % end of time loop
 
@@ -953,14 +969,14 @@ save(strcat(save_path,'Vol.mat'), 'Vol');
 % Plots against time
 tvec = linspace(tspan(1),tspan(2),tspan(3)+1);
 
-pfig=figure(1); set(gcf,'Visible','on');
+pfig=figure(1); % set(gcf,'Visible','off');
 plot(tvec,Vol)
 xlabel('t [s]'); ylabel('volume [m^3]')
 %print(pfig,'-deps',strcat(save_path,'volume.eps'));
 print(pfig,'-djpeg',strcat(save_path,'volume.jpeg'));
 saveas(pfig,strcat(save_path,'volume.fig'));
 
-pfig=figure(2); set(gcf,'Visible','on');
+pfig=figure(2); % set(gcf,'Visible','off');
 plot(tvec,frontvelocity_pred,'.k',tvec,frontvelocity_corr,tvec,frontvelocity_ex,'--r')
 xlabel('t [s]'); ylabel('front velocity [m/s]')
 legend('predictor','corrector','exact')

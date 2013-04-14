@@ -60,8 +60,16 @@ wdqq = zeros(nq,nt);    % Ritter
 wdqq(i,j) = 3;
 
 wd_el = 2*wq*wdqq;
-wdin = pdeprtni(p,t,wd_el);
-hin = wdin+h0;
+% wdin = pdeprtni(p,t,wd_el);
+% hin = wdin+h0;
+hin = pdeprtni(p,t,wd_el);
+wdin = (hin-h0).*(hin>h0);
+
+% Like Stoker/Ritter, but with linear/parabolic transition
+% hl = 3; hr = 0; xl = -5; xr = 5;
+% hin = hl.*(x<xl) + hr.*(x>xr) + ((hl-hr)/(xr-xl).*(xr-x)+hr).*(x>=xl).*(x<=xr);
+% % hin = hl.*(x<0) + hr.*(x>xr) + (hl/xr^2.*(x-xr).^2+hr).*(x>=0).*(x<=xr);
+% wdin = (hin-h0).*(hin>h0);
 
 %Parabolic bowl
 % versione vecchia: non sappiamo cosa fa: non ci torna parabolic...

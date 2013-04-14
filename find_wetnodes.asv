@@ -32,14 +32,13 @@ end
 wetnodes = setdiff(unique(wetnodes),[0]);
     % setdiff is to remove 0: it's not an index
     
-% new_wetnodes = [];
-% for i=1:size(elements,2)
-%     v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
-%     if ~isempty(union(union(find(wetnodes==v1),find(wetnodes==v2)),find(wetnodes==v3)))
-%         new_wetnodes = [new_wetnodes v1 v2 v3];
-%     end
-% end
-% wetnodes = unique(new_wetnodes);
+for i=1:size(elements,2)
+    v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
+    if ~isempty(union(union(find(wetnodes==v1),find(wetnodes==v2)),find(wetnodes==v3)))
+        new_wetnodes = [new_wetnodes v1 v2 v3];
+    end
+end
+wetnodes = setdiff(unique(wetnodes),[0]);
     
 end
 

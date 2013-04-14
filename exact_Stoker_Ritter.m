@@ -5,6 +5,7 @@ function [u_ex,h_ex,shockvelocity_ex] = exact_Stoker_Ritter(vertices,elements,bo
 % Computes exact solution of Stoker/Ritter problem with initial heigth
 % discontinuity on x=0 and initial velocity u=0.
 %
+% tspan:        time interval in which to compute the solution
 % h0:           bathimetry
 % hl, hr:       initial total elevation for x<0, x>0, respectively
 % g:            gravity acceleration
@@ -86,12 +87,14 @@ if do_print==1
 
     for i=1:length(t)
     
-        pfig = figure(501);
+        pfig = figure(501);  set(gcf,'Visible','off');
         pdeplot(vertices,boundaries,elements,'zdata',h_ex(:,i),'zstyle','discontinuous')
         title(strcat('exact h (where wet) at t=',num2str(t(i))))%,'  Vol=',num2str(volume)));
+        % print(pfig,'-deps',strcat(save_path,'h',num2str(t(i),'%.3f'),'exact','.eps'));
+        print(pfig,'-djpeg',strcat(save_path,'h',num2str(t(i),'%.3f'),'exact','.jpeg'));
         saveas(pfig,strcat(save_path,'h',num2str(t(i),'%.3f'),'exact','.fig'));
 
-        pfig = figure(502);
+        pfig = figure(502);  set(gcf,'Visible','off');
         plot(vertices(1,idxs_ymin),h_ex(idxs_ymin,i),vertices(1,idxs_ymax),h_ex(idxs_ymax,i),vertices(1,idxs_ymed),h_ex(idxs_ymed,i))
         legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d')
         title(strcat('h_e_x at t = ',num2str(t(i))));
