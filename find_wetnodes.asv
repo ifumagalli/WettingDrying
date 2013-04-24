@@ -23,7 +23,7 @@ wetnodes = zeros(1,size(elements,2)*3);
 for i=1:size(elements,2)
     %%% this cycle could be made more efficient
     v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
-    if ((c(v1)>tol) + (c(v2)>tol) + (c(v3)>tol))>1
+    if ((abs(c(v1))>tol) + (abs(c(v2))>tol) + (abs(c(v3))>tol))>1
         wetnodes(3*i-2) = v1;
         wetnodes(3*i-1) = v2;
         wetnodes(3*i) = v3;
@@ -32,13 +32,15 @@ end
 wetnodes = setdiff(unique(wetnodes),[0]);
     % setdiff is to remove 0: it's not an index
     
+new_wetnodes = [];
 for i=1:size(elements,2)
     v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
-    if ~isempty(union(union(find(wetnodes==v1),find(wetnodes==v2)),find(wetnodes==v3)))
+%     if ~isempty(union(union(find(wetnodes==v1),find(wetnodes==v2)),find(wetnodes==v3)))
+    if (~isempty(find(wetnodes))+~isempty(find(wetnodes))+~isempty(find(wetnodes)))>1
         new_wetnodes = [new_wetnodes v1 v2 v3];
     end
 end
-wetnodes = setdiff(unique(wetnodes),[0]);
+wetnodes = unique(new_wetnodes);
     
 end
 

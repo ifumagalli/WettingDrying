@@ -15,6 +15,7 @@ griglie_varie.mat:
 	tspan,tstart,theta
 
 quiverscale.m: scaricato da internet, serve per dare la scala delle frecce quando si usa quiver
+temp.m:		file di appoggio per scriptini o prove
 
 Modificati ma ancora in dropbox e non qui:
 	assem_mi.m : introdotto qualche commento e provato a mettere il residuo a 0 o a 1 per agire sulla parte dello shock-capturing che dipende da esso
