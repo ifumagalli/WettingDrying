@@ -1,4 +1,4 @@
-function [u_ex,h_ex,shockvelocity_ex] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,tspan,h0,hl,hr,g,do_print)
+function [u_ex,h_ex,shockvelocity_ex] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,tspan,h0,hl,hr,g,n,do_print)
 
 %   [u_ex,h_ex,shockvelocity_ex] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,tspan,h0,hl,hr,g)
 % 
@@ -9,6 +9,7 @@ function [u_ex,h_ex,shockvelocity_ex] = exact_Stoker_Ritter(vertices,elements,bo
 % h0:           bathimetry
 % hl, hr:       initial total elevation for x<0, x>0, respectively
 % g:            gravity acceleration
+% n:            Manning friction coefficient
 % u_ex,h_ex:    exact solution: there is 0 wherever there's no water
 % do_print:     =1 if you want to have some plots (default =0)
 % NB: v_ex = 0
@@ -26,43 +27,75 @@ end
 
 isRitter = (hr==0);
 
-syms cm
-% cm = ~isRitter * solve(-8*g*hr*cm^2*(g*hl-cm^2)^2+(cm^2-g*hr)^2*(cm^2+g*hr),cm);
-cm = ~isRitter * roots([1, 0, -9*g*hr, 16*g*hr*sqrt(g*hl), -g^2*hr*(hr+8*hl), 0, (g*hr)^3]);
-    % NB: l'equazione che risolviamo per trovare cm non è quella di questo
-    % articolo succitato, ma l'abbiamo ricavata da un misto di questo
-    % articolo e l'Hudson, ponendo cm=c2
-    % PROVARE CON L'EQUAZIONE DELLO SWASHES
-cm = max(cm(find(imag(cm)==0)))
-ex_hraref = @(x,t) 4/(9*g)*(sqrt(g*hl)-x*(1./(2*t))).^2;
-ex_hm = @(x,t) ~isRitter * cm^2/g*ones(size(x))*ones(size(t));
-ex_uraref = @(x,t) 2/3*(sqrt(g*hl)+x*(1./t));
-ex_um = @(x,t) ~isRitter * 2*(sqrt(g*hl)-cm);
-
-ex_xA = @(t) -t*sqrt(g*hl);
-ex_xB = @(t) t*(2*sqrt(g*hl)-3*cm);
-ex_xC = @(t) t*2*cm^2*(sqrt(g*hl)-cm)/(cm^2-g*hr);
-
 shockvelocity_ex = [];
-if isRitter
-    shockvelocity_ex = ex_xB(1);
+if(n==0)
+    syms cm
+    % cm = ~isRitter * solve(-8*g*hr*cm^2*(g*hl-cm^2)^2+(cm^2-g*hr)^2*(cm^2+g*hr),cm);
+    cm = ~isRitter * roots([1, 0, -9*g*hr, 16*g*hr*sqrt(g*hl), -g^2*hr*(hr+8*hl), 0, (g*hr)^3]);
+        % NB: l'equazione che risolviamo per trovare cm non è quella di questo
+        % articolo succitato, ma l'abbiamo ricavata da un misto di questo
+        % articolo e l'Hudson, ponendo cm=c2
+        % PROVARE CON L'EQUAZIONE DELLO SWASHES
+    cm = max(cm(find(imag(cm)==0)))
+    ex_hraref = @(x,t) 4/(9*g)*(sqrt(g*hl)-x*(1./(2*t))).^2;
+    ex_hm = @(x,t) ~isRitter * cm^2/g*ones(size(x))*ones(size(t));
+    ex_uraref = @(x,t) 2/3*(sqrt(g*hl)+x*(1./t));
+    ex_um = @(x,t) ~isRitter * 2*(sqrt(g*hl)-cm);
+
+    ex_xA = @(t) -t*sqrt(g*hl);
+    ex_xB = @(t) t*(2*sqrt(g*hl)-3*cm);
+    ex_xC = @(t) t*2*cm^2*(sqrt(g*hl)-cm)/(cm^2-g*hr);
+
+    if isRitter
+        shockvelocity_ex = ex_xB(1);
+    else
+        shockvelocity_ex = ex_xC(1);
+    end
+
+    ex_h = @(x,t) hl*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
+            + ex_hraref(x,t).*(x*ones(size(t))<ex_xB(ones(size(x))*t)).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
+            + ex_hm(x,t).*(x*ones(size(t))<ex_xC(ones(size(x))*t)).*(x*ones(size(t))>=ex_xB(ones(size(x))*t)) ...
+            + hr*(x*ones(size(t))>=ex_xC(ones(size(x))*t));
+
+    ex_u = @(x,t) 0*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
+            + ex_uraref(x,t).*(x*ones(size(t))<ex_xB(ones(size(x))*t)).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
+            + ex_um(x,t).*(x*ones(size(t))<ex_xC(ones(size(x))*t)).*(x*ones(size(t))>=ex_xB(ones(size(x))*t)) ...
+            + 0*(x*ones(size(t))>=ex_xC(ones(size(x))*t));
+
+    h_ex = ex_h(vertices(1,:)',t);
+    u_ex = ex_u(vertices(1,:)',t);
+    
 else
-    shockvelocity_ex = ex_xC(1);
+    C = 1/n;%*hl^(1/6);
+    ex_xA = @(t) -t*sqrt(g*hl);
+    ex_xB = @(t) t*2*sqrt(g*hl);
+    
+    alpha1 = @(x,t) 6/5*(1./(2-x*(1./(t.*sqrt(g*hl)))))-2/3+4/135*sqrt(3)*(2-x*(1./(t.*sqrt(g*hl)))).^(3/2);
+    alpha2 = @(x,t) 12*(1./(2-x*(1./(t.*sqrt(g*hl)))))-8/3+8/189*sqrt(3)*(2-x*(1./(t.*sqrt(g*hl)))).^(3/2)-108/7*(1./(2-x*(1./(t.*sqrt(g*hl))))).^2;
+    ex_hco = @(x,t) 1/g*(2/3*sqrt(g*hl)-x*(1./(3*t))+g^2*(1./C.^2).*alpha1(x,t).*t).^2;
+    ex_uco = @(x,t) 2/3*(sqrt(g*hl))+2*x*(1./(3*t))+g^2*(1./C.^2).*alpha2(x,t).*t;
+
+    [utip_ex,idx] = max(ex_uco(vertices(1,:),t).*(vertices(1,:)<ex_xB(t)).*(vertices(1,:)>ex_xA(t)));
+    xT_ex = vertices(1,idx);
+    
+%     ex_h = @(x,t) hl*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
+%             + ex_hco(x,t).*(x*ones(size(t))<ex_xB(ones(size(x))*t)).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
+%             + hr*(x*ones(size(t))>=ex_xB(ones(size(x))*t));
+        
+    ex_h = @(x,t) hl*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
+            + ex_hco(x,t).*((x<xT_ex)*ones(size(t))).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
+            + hr*(x>=xT_ex);
+        
+    ex_u = @(x,t) 0*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
+            + ex_uco(x,t).*((x<xT_ex)*ones(size(t))).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
+            + utip_ex*(x*ones(size(t))<ex_xB(ones(size(x))*t)).*((x>=xT_ex)*ones(size(t))) ...
+            + 0*(x*ones(size(t))>=ex_xB(ones(size(x))*t));
+
+    h_ex = ex_h(vertices(1,:)',t);
+    u_ex = ex_u(vertices(1,:)',t);
+    shockvelocity_ex = ex_xB(1);
 end
 
-ex_h = @(x,t) hl*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
-        + ex_hraref(x,t).*(x*ones(size(t))<ex_xB(ones(size(x))*t)).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
-        + ex_hm(x,t).*(x*ones(size(t))<ex_xC(ones(size(x))*t)).*(x*ones(size(t))>=ex_xB(ones(size(x))*t)) ...
-        + hr*(x*ones(size(t))>=ex_xC(ones(size(x))*t));
-    
-ex_u = @(x,t) 0*(x*ones(size(t))<=ex_xA(ones(size(x))*t)) ...
-        + ex_uraref(x,t).*(x*ones(size(t))<ex_xB(ones(size(x))*t)).*(x*ones(size(t))>ex_xA(ones(size(x))*t)) ...
-        + ex_um(x,t).*(x*ones(size(t))<ex_xC(ones(size(x))*t)).*(x*ones(size(t))>=ex_xB(ones(size(x))*t)) ...
-        + 0*(x*ones(size(t))>=ex_xC(ones(size(x))*t));
-
-h_ex = ex_h(vertices(1,:)',t);
-u_ex = ex_u(vertices(1,:)',t);
-    
 if do_print==1
 
     % figure(500)

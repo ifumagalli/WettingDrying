@@ -2,11 +2,9 @@ Codici vari per il progetto di ANEDP2 2011/2012
 
 Autori: Elena Bulgarello, Ivan Fumagalli
 
-Contiene solo i files modificati da noi.
+Contiene solo files modificati da noi.
 
 our_swesimodeladapt_gio_bc_predcorr.m è il main
-
-Ivan_our_... non serve a niente
 
 griglie_varie.mat:
 	p,e,t : points,edges,triangles della mesh square6x6.msh
@@ -19,4 +17,6 @@ temp.m:		file di appoggio per scriptini o prove
 
 Modificati ma ancora in dropbox e non qui:
 	assem_mi.m : introdotto qualche commento e provato a mettere il residuo a 0 o a 1 per agire sulla parte dello shock-capturing che dipende da esso
-	assem_mat_vect_gio_stab_i e ..._stab_adapt : idem, per spegnere tutta la stabilizzazione
+	assem_GLS_... : ~idem
+
+NB le cartelle che finiscono con rescut0.1, a parte Ritter_rectang40x5_N192x24_1t5_100_rescut0.1, ce l'hanno perché non abbiamo più rimesso a posto assem_mi.m dopo averlo modificato per avere rescut0.1. Tuttavia, non è il caso di rifarle, dato che Ritter_rectang40x5_N192x24_1t5_100_rescut0.1 non mostra differenze significative dalla simulazione di riferimento

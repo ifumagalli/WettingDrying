@@ -1,6 +1,65 @@
-pause off; close all; our_swesimodeladapt_gio_bc_predcorr(rppppp,rttttt,reeeee,tspan,tstart,theta);
-% save_path = 'C:\Users\Ivan\Documents\temp_Ivan\';
-% tvec = linspace(1,4.4,85+1);
+function una_med=temp(vertices,elements,boundaries)
+save_path = 'C:\Users\Ivan\Documents\temp_Ivan\';
+load_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\Ritter_rectang40x5_N192x24_1t5_100\';
+load(strcat(load_path,'dati'))
+
+tvec = linspace(tspan(1),tspan(2),tspan(3)+1);
+ymin = min(vertices(2,:));
+idxs_ymin = find(vertices(2,:) == ymin);
+ymax = max(vertices(2,:));
+idxs_ymax = find(vertices(2,:) == ymax);
+[~,idx] = min(abs(vertices(2,:)-(ymax+ymin)/2));
+ymed = vertices(2,idx);
+idxs_ymed = find(vertices(2,:) == ymed);
+
+t = 5;
+[u_ex,h_ex,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[t t 0],0,3,0,1,1); %<StRi<
+load(strcat(load_path,num2str(t,'%.3f'),'.mat'))
+
+pfig=figure(3110); set(gcf,'Visible','on'); %<StRi<
+        plot(vertices(1,idxs_ymin),cna(idxs_ymin),vertices(1,idxs_ymax),cna(idxs_ymax), ... %<StRi<
+             vertices(1,idxs_ymed),cna(idxs_ymed),vertices(1,idxs_ymed),sqrt(4*g*h_ex(idxs_ymed))) %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution') %<StRi<
+        title(strcat('c_n at t = ',num2str(t), ' - Predictor')); %<StRi<
+        %print(pfig,'-deps',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
+        print(pfig,'-djpeg',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
+        saveas(pfig,strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
+pfig=figure(3111); set(gcf,'Visible','on'); %<StRi<
+        plot(vertices(1,idxs_ymin),una(idxs_ymin),vertices(1,idxs_ymax),una(idxs_ymax), ... %<StRi<
+             vertices(1,idxs_ymed),una(idxs_ymed),vertices(1,idxs_ymed),u_ex(idxs_ymed)) %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution') %<StRi<
+        title(strcat('u_n at t = ',num2str(t), ' - Predictor')); %<StRi<
+        %print(pfig,'-deps',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
+        print(pfig,'-djpeg',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
+        saveas(pfig,strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
+pfig=figure(3112); set(gcf,'Visible','on'); %<StRi<
+        plot(vertices(1,idxs_ymin),vna(idxs_ymin),vertices(1,idxs_ymax),vna(idxs_ymax), ... %<StRi<
+             vertices(1,idxs_ymed),vna(idxs_ymed),vertices(1,idxs_ymed),0) %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution') %<StRi<
+        title(strcat('v_n at t = ',num2str(t), ' - Predictor')); %<StRi<
+        %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
+        print(pfig,'-djpeg',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
+        saveas(pfig,strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
+
+N=12;
+fc = length(idxs_ymed)/40
+fNyq = fc/2;
+b=fir1(N,0.2);
+una_med = una(idxs_ymed);
+una_filtered=filter(b,fNyq,una(idxs_ymed));
+
+semi_amp_movavg = 2;
+una_filtered = una_med;
+for iii=semi_amp_movavg+1:length(una_med)-semi_amp_movavg-1
+    una_filtered(iii) = mean(una_med(iii-semi_amp_movavg:iii+semi_amp_movavg));
+end
+
+b=fir1(N,0.2,'high');
+una_non_filtered=filter(b,fNyq,una(idxs_ymed));
+pfig=figure(1);
+plot(vertices(1,idxs_ymed),una(idxs_ymed),vertices(1,idxs_ymed),una_filtered)%,vertices(1,idxs_ymed),una_non_filtered,vertices(1,idxs_ymed),una_non_filtered+una_filtered)
+legend('originale','filtrata')%,'"residuo"','orig+res')
+title('una filtrata')
 % 
 % [ar]=pdetrg(rppp,rttt);
 % [u_ex,h_ex,frontvelocity_ex(1)] = exact_Stoker_Ritter(rppp,rttt,reee,save_path,[1 1 0],0,3,0,1);
@@ -30,3 +89,4 @@ pause off; close all; our_swesimodeladapt_gio_bc_predcorr(rppppp,rttttt,reeeee,t
 % saveas(pfig,strcat(save_path,'frontvelocity.fig'));
 % 
 % save(strcat(save_path,'Vol.mat'), 'Vol');
+end

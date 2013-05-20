@@ -703,7 +703,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
         plot(vertices(1,idxs_ymin),vna(idxs_ymin),vertices(1,idxs_ymax),vna(idxs_ymax), ... %<StRi<
              vertices(1,idxs_ymed),vna(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3,'LineWidth',3); hold off
+        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
         legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
         title(strcat('v_n at t = ',num2str(t), ' - Predictor')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
@@ -897,7 +897,7 @@ temp=zeros(3*nov,1);
     plot(vertices(1,idxs_ymin),hn(idxs_ymin),vertices(1,idxs_ymax),hn(idxs_ymax), ... %<StRi<
         vertices(1,idxs_ymed),hn(idxs_ymed),vertices(1,idxs_ymed),h_ex(idxs_ymed), ... %<StRi<
         vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-    hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3,'LineWidth',3); hold off
+    hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
     legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
     title(strcat('h_n at t = ',num2str(t), ' - Corrector')); %<StRi<
     %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
@@ -908,7 +908,7 @@ temp=zeros(3*nov,1);
     plot(vertices(1,idxs_ymin),cn(idxs_ymin),vertices(1,idxs_ymax),cn(idxs_ymax), ... %<StRi<
          vertices(1,idxs_ymed),cn(idxs_ymed),vertices(1,idxs_ymed),sqrt(4*g*h_ex(idxs_ymed)), ... %<StRi<
          vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-    hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3,'LineWidth',3); hold off
+    hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
     legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
     title(strcat('c_n at t = ',num2str(t), ' - Corrector')); %<StRi<
     %print(pfig,'-deps',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
@@ -918,7 +918,7 @@ temp=zeros(3*nov,1);
         plot(vertices(1,idxs_ymin),un(idxs_ymin),vertices(1,idxs_ymax),un(idxs_ymax), ... %<StRi<
              vertices(1,idxs_ymed),un(idxs_ymed),vertices(1,idxs_ymed),u_ex(idxs_ymed), ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3,'LineWidth',3); hold off
+        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
         legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
         title(strcat('u_n at t = ',num2str(t), ' - Corrector')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
@@ -928,7 +928,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
         plot(vertices(1,idxs_ymin),vn(idxs_ymin),vertices(1,idxs_ymax),vn(idxs_ymax), ... %<StRi<
              vertices(1,idxs_ymed),vn(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3,'LineWidth',3); hold off
+        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
         legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
         title(strcat('v_n at t = ',num2str(t), ' - Corrector')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<

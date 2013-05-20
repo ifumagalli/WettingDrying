@@ -11,7 +11,9 @@ function [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,p,t,time,g,h0,save_path)
 
 %CONDIZIONI INIZIALI PER UN VN
 
-un =  +0.*x;
+% un =  +0.*x;
+un = -1/20.*x;%.*(x<0);
+% un = ones(size(x));
 % for i=1:size(y)
 %    if y(i)< -10
 %     un(i) = 0;
@@ -30,45 +32,45 @@ vn = 0 + 0.*x;
 
 %CONDIZIONI INIZIALI PER WD
 
-
 % Onda sinusoidale
 
 % wdin=0 + 0.5*cos(2*pi*(x+20)./80) - h0;
 
 % acqua ferma
-
-% wdin =  0 - h0; 
+hin = 3*ones(size(x));
+wdin =  max(0,hin - h0); 
 
 % Moto uniforme
 
 % wdin = 0.5 + 0.*x;
 
 % Stoker (all wet) / Ritter (partially dry)
-nt =  size(t,2);
-[xq,yq,wq,phiq] = basis_on_quad2D('P1',10); 
-nq = length(wq);
-i1 = t(1,:);
-i2 = t(2,:);
-i3 = t(3,:);
-x1 = p(1,i1);
-x2 = p(1,i2);
-x3 = p(1,i3);
-xqq = phiq(1,:)'*x1 + phiq(2,:)'*x2 + phiq(3,:)'*x3;
-% wdqq = 1.e-2*ones(nq,nt);     % Stoker
-wdqq = zeros(nq,nt);    % Ritter
-[i,j] = find(xqq<=0);
-wdqq(i,j) = 3;
-
-wd_el = 2*wq*wdqq;
-% wdin = pdeprtni(p,t,wd_el);
-% hin = wdin+h0;
-hin = pdeprtni(p,t,wd_el);
-wdin = (hin-h0).*(hin>h0);
+% nt =  size(t,2);
+% [xq,yq,wq,phiq] = basis_on_quad2D('P1',10); 
+% nq = length(wq);
+% i1 = t(1,:);
+% i2 = t(2,:);
+% i3 = t(3,:);
+% x1 = p(1,i1);
+% x2 = p(1,i2);
+% x3 = p(1,i3);
+% xqq = phiq(1,:)'*x1 + phiq(2,:)'*x2 + phiq(3,:)'*x3;
+% % wdqq = 1.e-2*ones(nq,nt);     % Stoker
+% wdqq = zeros(nq,nt);    % Ritter
+% [i,j] = find(xqq<=0);
+% wdqq(i,j) = 3;
+% 
+% wd_el = 2*wq*wdqq;
+% % wdin = pdeprtni(p,t,wd_el);
+% % hin = wdin+h0;
+% hin = pdeprtni(p,t,wd_el);
+% wdin = (hin-h0).*(hin>h0);
 
 % Like Stoker/Ritter, but with linear/parabolic transition
-% hl = 3; hr = 0; xl = -5; xr = 5;
-% hin = hl.*(x<xl) + hr.*(x>xr) + ((hl-hr)/(xr-xl).*(xr-x)+hr).*(x>=xl).*(x<=xr);
+% hl = 10; hr = 0; xl = -20; xr = 0;
+% % hin = hl.*(x<xl) + hr.*(x>xr) + ((hl-hr)/(xr-xl).*(xr-x)+hr).*(x>=xl).*(x<=xr);
 % % hin = hl.*(x<0) + hr.*(x>xr) + (hl/xr^2.*(x-xr).^2+hr).*(x>=0).*(x<=xr);
+% hin = hl.*(x<xl) + hr.*(x>xr) + (x.^2/20).*(x>=xl).*(x<=xr);
 % wdin = (hin-h0).*(hin>h0);
 
 %Parabolic bowl

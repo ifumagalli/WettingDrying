@@ -3,20 +3,22 @@
  Load: lg_fem lg_mesh lg_mesh3 eigenvalue
     1 : //mesh Th=readmesh("rectang40x5_N192x24.msh");
     2 : //plot(Th);
-    3 : int N=48;
+    3 : int N=1;
  *** Warning  The identifier N hide a Global identifier
  
-    4 : mesh Th = square(8*N,N);
-    5 : plot(Th);
-    6 :
-    7 : Th=movemesh(Th,[40*x-20,5*y-2.5]);
-    8 : plot(Th);
-    9 :
-   10 : savemesh(Th,"rectang40x5_N384x48.msh"); sizestack + 1024 =1176  ( 152 )
+    4 : //mesh Th = square(8*N,N);
+    5 : mesh Th = square(40*N,N);
+    6 : plot(Th);
+    7 :
+    8 : //Th=movemesh(Th,[40*x-20,5*y-2.5]);
+    9 : Th = movemesh(Th,[40*x-20,y-0.5]);
+   10 : plot(Th);
+   11 :
+   12 : savemesh(Th,"rectang40x5_N32x4.msh"); sizestack + 1024 =1176  ( 152 )
  
-  -- Square mesh : nb vertices  =18865 ,  nb triangles = 36864 ,  nb boundary edges 864
+  -- Square mesh : nb vertices  =82 ,  nb triangles = 80 ,  nb boundary edges 82 
   number of required edges : 0
-times: compile 0.025s, execution 0.498s,  mpirank:0
- CodeAlloc : nb ptr  2243,  size :151448 mpirank: 0
+times: compile 0.068s, execution 0.227s,  mpirank:0
+ CodeAlloc : nb ptr  2241,  size :151428 mpirank: 0
 Bien: On a fini Normalement
  try getConsole C:\Users\Ivan\Documents\GitHub\WettingDrying\generazioneMesh.edp 
