@@ -1,5 +1,5 @@
 function [A,rhs] = assem_mat_vect_gio_stab_i(vertices,elements,boundaries,g,dt,un,vn,cn,theta,coeff,h0,h_k,f1,f2,f3,wdn,omega,time...
-    ,un_old,vn_old,cn_old,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path)
+    ,un_old,vn_old,cn_old,nx_nodes,ny_nodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path)
                                    
 %
 % assembla la matrice globale e il termine noto del sistema 
@@ -20,15 +20,16 @@ A_adve = ass_adve(vertices,elements,un,vn,1,1,2);
 % Gx = \int_T g d(\phi_j)/dx \phi_i
 % Gy = \int_T g d(\phi_j)/dy \phi_i 
 [Gx,Gy] = ass_grad(vertices,elements,1,cn*0.5,2);
+[Gx2,Gy2] = ass_grad(vertices,elements,omega,1,2);
 
 GxMom=Gx; GyMom=Gy;
 % Per spegnere il termine con c/2 grad c nell'eq del momento sul fronte
-% GxMom(frontnodes,:) = 0;
-% GyMom(frontnodes,:) = 0;
-% GxMom(littlewetnodes,:) = 0;
-% GyMom(littlewetnodes,:) = 0;
-% GxMom(drynodes,:) = 0;
-% GyMom(drynodes,:) = 0;
+% GxMom(frontnodes,:) = Gx2(frontnodes,:);
+% GyMom(frontnodes,:) = Gy2(frontnodes,:);
+% GxMom(littlewetnodes,:) = Gx2(littlewetnodes,:);
+% GyMom(littlewetnodes,:) = Gy2(littlewetnodes,:);
+% GxMom(drynodes,:) = Gx2(drynodes,:);
+% GyMom(drynodes,:) = Gy2(drynodes,:);
 
 % matrici: 
 % Hx = \int_T H d(\phi_j)/dx \phi_i
@@ -118,6 +119,8 @@ CC_A = diag(CC_A*ones(nov,1)); % lumping
 CC_A = [Zero Zero Zero; Zero Zero Zero; Zero Zero CC_A];
 CC_rhs = CC_A*[0.*un;0.*vn;cn];
 
+rhs = (M3 - (1-theta)*dt*A)*[un;vn;cn] + delta_s*(M_Lh - dt*(1-theta_s)*Lh)*[un;vn;cn] +dt*([rhs_x;rhs_y;rhs_3] - [rhs_fr;zeros(nov,1)] + delta_s*f_Lh) + CC_rhs;
+
 % % Per modulare la stabilizzazione sul fronte
 % delta_front = 2;
 % Lh(frontnodes,:) = delta_front*Lh(frontnodes,:);
@@ -128,38 +131,6 @@ CC_rhs = CC_A*[0.*un;0.*vn;cn];
 % M_Lh(frontnodes,frontnodes) = M_Lh(frontnodes,frontnodes) / delta_front;
 % f_Lh(frontnodes) = delta_front*f_Lh(frontnodes);
 
-% Per imporre u=umax sui dry (ora non fa niente!)
-gamma=0;
-% [dx_cn_vecchia,dy_cn_vecchia]=pdegrad(vertices,elements,cn_vecchia);
-% val = zeros(nov,1);
-% val(frontnodes) = (cn(frontnodes)-cn_vecchia(frontnodes))./(dt*dx_cn_vecchia(frontnodes));
-% ys = unique(vertices(2,:));
-% for i=1:length(ys)
-% %     [~,idx] = min(abs(vertices(2,:)-(ymax+ymin)/2));
-% %     ymed = vertices(2,idx);
-% %     idxs_ymed = find(vertices(2,:) == ymed);
-%     idxs = find(vertices(2,:) = ys(i);
-%     idx_front = max(intersect(idxs,frontnodes));
-%     val(idxs(idxs >= idx_front)) = val(idx_front);
-% end
-val = max(un(setdiff(wetnodes,frontnodes)));
-% [V11,V12,V21,V22] = u_fixval_penalty(vertices,elements,val,2);
-V11 = M;
-V12 = 0.*V11;
-V21 = 0.*V11;
-V22 = 0.*V11;
-% V(un(setdiff([1:nov],drynodes)),un(setdiff([1:nov],drynodes)))=0*V(un(setdiff([1:nov],drynodes)),un(setdiff([1:nov],drynodes)));
-% V(un(setdiff([1:nov],drynodes)),:)=0*V(un(setdiff([1:nov],drynodes)),:);
-% V(:,un(setdiff([1:nov],drynodes)))=0*V(:,un(setdiff([1:nov],drynodes)));
-V11(setdiff(wetnodes,frontnodes),:)=0;
-% V(:,wetnodes)=0*V(:,wetnodes);
-V = gamma*[V11 , V12 , Zero;
-           V21 , V22 , Zero;
-           Zero, Zero, Zero];
-rhs_V = V*[val*ones(nov,1); zeros(nov,1); zeros(nov,1)];
-rhs_V(setdiff(wetnodes,frontnodes)) = 0;
-
-% termine noto e matrice IN QUESTO ORDINE
-rhs = (M3 - (1-theta)*dt*A)*[un;vn;cn] + delta_s*(M_Lh - dt*(1-theta_s)*Lh)*[un;vn;cn] +dt*([rhs_x;rhs_y;rhs_3] - [rhs_fr;zeros(nov,1)] + delta_s*f_Lh);% + CC_rhs + rhs_V;
-A = M3 + theta*dt*A + delta_s*(M_Lh + dt*theta_s*Lh);% + CC_A + V;
+% matrice
+A = M3 + theta*dt*A + delta_s*(M_Lh + dt*theta_s*Lh) + CC_A;
 

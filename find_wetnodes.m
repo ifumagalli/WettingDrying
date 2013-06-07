@@ -1,4 +1,4 @@
-function [wetnodes,littlewetnodes,frontnodes,frontwettednodes] = find_wetnodes(elements,u,c,g,tol,tol2,phase)
+function [wetnodes,littlewetnodes,frontnodes,frontwettednodes,firstdrynodes] = find_wetnodes(elements,u,c,g,tol,tol2,phase)
 
 % [ wetnodes,frontnodes ] = FIND_WETNODES(elements,u,c,g,tol,phase)
 % finds wet and front nodes and returns vectors with their indexes
@@ -64,14 +64,18 @@ frontnodes = unique(frontnodes);
 frontwettednodes = unique(frontwettednodes);
 littlewetnodes = unique(littlewetnodes);
  
-% new_wetnodes = [];
-% for i=1:size(elements,2)
-%     v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
-% %     if ~isempty(union(union(find(wetnodes==v1),find(wetnodes==v2)),find(wetnodes==v3)))
-%     if (~isempty(find(wetnodes==v1))+~isempty(find(wetnodes==v2))+~isempty(find(wetnodes==v3)))>1
-%         new_wetnodes = [new_wetnodes v1 v2 v3];
-%     end
-% end
-% wetnodes = unique(new_wetnodes);
+old_wetnodes = wetnodes;
+for i=1:5
+    new_wetnodes = [];
+    for i=1:size(elements,2)
+        v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
+    %     if ~isempty(union(union(find(old_wetnodes==v1),find(old_wetnodes==v2)),find(old_wetnodes==v3)))
+        if (~isempty(find(old_wetnodes==v1))+~isempty(find(old_wetnodes==v2))+~isempty(find(old_wetnodes==v3)))>1
+            new_wetnodes = [new_wetnodes v1 v2 v3];
+        end
+    end
+    old_wetnodes = unique(new_wetnodes);
+end
+firstdrynodes = setdiff(old_wetnodes,wetnodes);
 
 end

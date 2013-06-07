@@ -58,16 +58,19 @@ xqq = phiq(1,:)'*x1 + phiq(2,:)'*x2 + phiq(3,:)'*x3;
 % wdqq = 1.e-2*ones(nq,nt);     % Stoker
 wdqq = zeros(nq,nt);    % Ritter
 [i,j] = find(xqq<=0);
-wdqq(i,j) = 3;
+wdqq(i,j) = 6;
 
 wd_el = 2*wq*wdqq;
 % wdin = pdeprtni(p,t,wd_el);
 % hin = wdin+h0;
-hin = pdeprtni(p,t,wd_el);
-wdin = (hin-h0).*(hin>h0);
+% hin = pdeprtni(p,t,wd_el);
+% wdin = (hin-h0).*(hin>h0);
+wdin = pdeprtni(p,t,wd_el);
+wdin = wdin.*(wdin>0);
+hin = wdin + h0;
 
-% Like Stoker/Ritter, but with linear/parabolic transition
-% hl = 10; hr = 0; xl = -20; xr = 0;
+% % Like Stoker/Ritter, but with linear/parabolic transition
+% hl = 10; hr = 0; xl = -0.01; xr = 0;
 % % hin = hl.*(x<xl) + hr.*(x>xr) + ((hl-hr)/(xr-xl).*(xr-x)+hr).*(x>=xl).*(x<=xr);
 % % hin = hl.*(x<0) + hr.*(x>xr) + (hl/xr^2.*(x-xr).^2+hr).*(x>=0).*(x<=xr);
 % hin = hl.*(x<xl) + hr.*(x>xr) + (x.^2/20).*(x>=xl).*(x<=xr);

@@ -1,5 +1,5 @@
 function [A,rhs] = assem_mat_vect_gio_stab_adapt(vertices,elements,boundaries,g,dt,un,vn,cn,una,vna,cna,theta,coeff,h0,h_k,f1,f2,f3,wdn,omega,time...
-    ,un_old,vn_old,cn_old,cn_vecchia,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,littlewetnodes,drynodes,save_path)
+    ,un_old,vn_old,cn_old,nx_nodes,ny_nodes,frontnodes,frontwettednodes,littlewetnodes,drynodes,save_path)
 
 %
 % assembla la matrice globale e il termine noto del sistema 
@@ -19,15 +19,16 @@ A_adve = ass_adve(vertices,elements,una,vna,omega,1,2);
 % Gx = \int_T g d(\phi_j)/dx \phi_i
 % Gy = \int_T g d(\phi_j)/dy \phi_i 
 [Gx,Gy] = ass_grad(vertices,elements,omega,cna*0.5,2);
+[Gx2,Gy2] = ass_grad(vertices,elements,omega,1,2);
 
 GxMom=Gx; GyMom=Gy;
 % Per spegnere il termine con c/2 grad c nell'eq del momento sul fronte
-% GxMom(frontnodes,:) = 0;
-% GyMom(frontnodes,:) = 0;
-% GxMom(littlewetnodes,:) = 0;
-% GyMom(littlewetnodes,:) = 0;
-% GxMom(drynodes,:) = 0;
-% GyMom(drynodes,:) = 0;
+% GxMom(frontnodes,:) = Gx2(frontnodes,:);
+% GyMom(frontnodes,:) = Gy2(frontnodes,:);
+% GxMom(littlewetnodes,:) = Gx2(littlewetnodes,:);
+% GyMom(littlewetnodes,:) = Gy2(littlewetnodes,:);
+% GxMom(drynodes,:) = Gx2(drynodes,:);
+% GyMom(drynodes,:) = Gy2(drynodes,:);
 
 % matrici: 
 % Hx = \int_T H d(\phi_j)/dx \phi_i
@@ -120,6 +121,8 @@ CC_A = diag(CC_A*ones(nov,1)); % lumping
 CC_A = [Zero Zero Zero; Zero Zero Zero; Zero Zero CC_A];
 CC_rhs = CC_A*[0.*un;0.*vn;cn];
 
+rhs = (M3 - (1-theta)*dt*A)*[un;vn;cn] + delta_s*(M_Lh - dt*(1-theta_s)*Lh)*[un;vn;cn] +dt*([rhs_x;rhs_y;rhs_3] - [rhs_fr;zeros(nov,1)] + delta_s*f_Lh) + CC_rhs;
+
 % % Per modulare la stabilizzazione sul fronte
 % delta_front = 0.5;
 % Lh(frontnodes,:) = delta_front*Lh(frontnodes,:);
@@ -130,63 +133,8 @@ CC_rhs = CC_A*[0.*un;0.*vn;cn];
 % M_Lh(frontnodes,frontnodes) = M_Lh(frontnodes,frontnodes) / delta_front;
 % f_Lh(frontnodes) = delta_front*f_Lh(frontnodes);
 
-% Per imporre u=umax sui dry
-% ESITO PROVE
-% 0-1-2-3-4-5 : u oscilla con valori anche negativi. Per forza, non ho
-% messo il - davanti al calcolo di val!
-% 0bis: u oscilla di bestia
-% 1bis-3bis-4bis: u esplode
-% 2bis: u oscilla con valori anche negativi
-% 5bis-5bis_ogni2Corr: u esplode, però fino a 0.8 h va bene, e poi il problema si genera da y=0
-% 5bis_ogni3Corr: come 5 bis, ma con problema che parte anche da y=max, ma un pochino più tardi
-% 5bis_ogni4Corr: esplode->salvata lo stesso
-% 5bis_ogni5Corr: OK->salvata
-[dx_cn_vecchia,dy_cn_vecchia]=pdegrad(vertices,elements,cn_vecchia);
-dx_cn_vecchia = pdeprtni(vertices,elements,dx_cn_vecchia);
-dy_cn_vecchia = pdeprtni(vertices,elements,dy_cn_vecchia);
-val = zeros(nov,1);
-% temp = setdiff(wetnodes,frontnodes); % prova 2-2bis
-temp = setdiff(frontnodes,frontwettednodes); % prova 3-4 3bis
-% val(frontnodes) = (cna(frontnodes)-cn_vecchia(frontnodes))./(dt*dx_cn_vecchia(frontnodes)+eps); %prove <=1
-% val(frontnodes) = -(cna(frontnodes)-cn_vecchia(frontnodes))./(dt*dx_cn_vecchia(frontnodes)+eps); %prove 0bis-1bis
-% val(temp) = (cna(temp)-cn_vecchia(temp))./(dt*dx_cn_vecchia(temp)+eps); %prova 2
-val(temp) = -(cna(temp)-cn_vecchia(temp))./(dt*dx_cn_vecchia(temp)+eps); %prova 2bis
-ys = unique(vertices(2,:));
-for i=1:length(ys)
-%     [~,idx] = min(abs(vertices(2,:)-(ymax+ymin)/2));
-%     ymed = vertices(2,idx);
-%     idxs_ymed = find(vertices(2,:) == ymed);
-    idxs = find(vertices(2,:) == ys(i));
-%     idx_front = max(intersect(idxs,frontnodes)); % prova 0-0bis
-%     idx_front = min(intersect(idxs,frontnodes)); % prova 1-1bis
-    idx_front = max(intersect(idxs,temp)); % prova 2-3-5-2bis-5bis
-%     idx_front = min(intersect(idxs,temp)); % prova 4-4bis
-    val(idxs(idxs >= idx_front)) = val(idx_front);
-end
-val'
-% val = max(un(setdiff(wetnodes,frontnodes)));
-% [V11,V12,V21,V22] = u_fixval_penalty(vertices,elements,val,2);
-V11 = M;
-V12 = 0.*V11;
-V21 = 0.*V11;
-V22 = 0.*V11;
-% V(un(setdiff([1:nov],drynodes)),un(setdiff([1:nov],drynodes)))=0*V(un(setdiff([1:nov],drynodes)),un(setdiff([1:nov],drynodes)));
-% V(un(setdiff([1:nov],drynodes)),:)=0*V(un(setdiff([1:nov],drynodes)),:);
-% V(:,un(setdiff([1:nov],drynodes)))=0*V(:,un(setdiff([1:nov],drynodes)));
-% V11(setdiff(wetnodes,frontnodes),:)=0; % prova <=4, (<=4)bis
-V11(wetnodes,:)=0; % prova 5-5bis
-if mod(floor(time/dt),4)~=0 
-    V11 = Zero;             
-end                         
-% V(:,wetnodes)=0*V(:,wetnodes);
-V = gamma*[V11 , V12 , Zero;
-           V21 , V22 , Zero;
-           Zero, Zero, Zero];
-% rhs_V = V*[val*ones(nov,1); zeros(nov,1); zeros(nov,1)];
-rhs_V = V*[val; zeros(nov,1); zeros(nov,1)];
-rhs_V(setdiff(wetnodes,frontnodes)) = 0;
+% matrice
+A = M3 + theta*dt*A + delta_s*(M_Lh + dt*theta_s*Lh) + CC_A;
 
-% termine noto e matrice IN QUESTO ORDINE
-rhs = (M3 - (1-theta)*dt*A)*[un;vn;cn] + delta_s*(M_Lh - dt*(1-theta_s)*Lh)*[un;vn;cn] +dt*([rhs_x;rhs_y;rhs_3] - [rhs_fr;zeros(nov,1)] + delta_s*f_Lh) + CC_rhs + rhs_V;
-A = M3 + theta*dt*A + delta_s*(M_Lh + dt*theta_s*Lh) + CC_A + V;
+
 

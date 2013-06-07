@@ -32,10 +32,10 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % Save path
 %ELENA%
 % save_path = 'C:\Users\Elena\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
-% save_path = 'C:\Users\Elena\Desktop\temp\';
+save_path = 'C:\Users\Elena\Desktop\temp\';
 %IVAN%
 % save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
-save_path = 'C:\Users\Ivan\Documents\temp_Ivan\'
+% save_path = 'C:\Users\Ivan\Documents\temp_Ivan\'
 
 % Temporal and spatial steps
 %coarse=3; % alpha sempre =1 %??? unused
@@ -83,9 +83,12 @@ yqq = phiq(1,:)'*y(it1)' + phiq(2,:)'*y(it2)' + phiq(3,:)'*y(it3)';
 % h0 = 1.61e-7*(x.^2 + y.^2);% parabolic bowl
 % h0 = 0.1*(x.^2+y.^2);
 % b = abs(max(y)-min(y)); % ??? unused
-h0 = zeros(size(x));
+% h0 = zeros(size(x));
 % h0 = 1.e-2 * (max(max(x))-x);
-% h0 = (x+20)*6.0/40.0;
+% h0 = (x+20)*6.0/40.0; % beach
+
+slope = -pi/36;
+h0 = -(x+20)* tan(slope);
 
 % Termine noto pendenza (rhs slope)
 [f_x,f_y]=pdegrad(vertices,elements,h0); %[UX,UY]=pdegrad(P,T,U) returns grad(u) evaluated at the center of each triangle.
@@ -163,8 +166,9 @@ hn = wdin + h0; % height w.r.t. the reference plane
 hl = hn(1); hr = hn(end); %<StRi<
     % initial heigths at left/right: we presume that the 1st/last vertice
     % is at the left/right side of the mesh
+wdl = hn(1)-h0(1); wdr = hn(end)-h0(end); %<StRi<
 % % % hl = 3; hr = 0; %<StRi<
-% % % [un,hn,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[tstart tstart 0],h0,hl,hr,g,n,1); %<StRi<
+% % % [un,hn,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[tstart tstart 0],h0,hl,hr,g,n,1,slope); %<StRi<
 % % % vn = 1.e-16*ones(size(un)); %<StRi<
 % % %     % if we put zeros we have cond(matrix_to_be_solved) = infty
 % % % wdin = (hn-h0).*(hn-h0 > 0); %<StRi<
@@ -516,7 +520,7 @@ chi_dry_c_nodes = zeros(size(vertices,2),1); chi_dry_c_nodes(dry_c_nodes)=1;
 
         disp('Solving linear system')
 
-        [u_ex,h_ex,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[t t 0],h0,hl,hr,g,n,0); %<StRi<
+        [u_ex,h_ex,~,wd_ex] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[t t 0],h0,hl,hr,g,n,0,slope); %<StRi<
 %         [u_ex,h_ex,frontvelocity_ex(p1)]
         % -----------PREDICTOR-------------
         uDir_in = [uDir_in0,uDir_in1];
@@ -677,12 +681,13 @@ temp=zeros(3*nov,1);
         saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'apred','.fig'));
 
         idx_front_ymed = max(intersect(frontwettednodes,idxs_ymed));
+        
         pfig=figure(1100); set(gcf,'Visible','off'); %<StRi<
         plot(vertices(1,idxs_ymin),hna(idxs_ymin),vertices(1,idxs_ymax),hna(idxs_ymax), ... %<StRi<
              vertices(1,idxs_ymed),hna(idxs_ymed),vertices(1,idxs_ymed),h_ex(idxs_ymed), ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
         title(strcat('h_n at t = ',num2str(t), ' - Predictor')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
         print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
@@ -690,34 +695,48 @@ temp=zeros(3*nov,1);
 
         pfig=figure(1110); set(gcf,'Visible','off'); %<StRi<
         plot(vertices(1,idxs_ymin),cna(idxs_ymin),vertices(1,idxs_ymax),cna(idxs_ymax), ... %<StRi<
-             vertices(1,idxs_ymed),cna(idxs_ymed),vertices(1,idxs_ymed),sqrt(4*g*h_ex(idxs_ymed)), ... %<StRi<
+             vertices(1,idxs_ymed),cna(idxs_ymed),vertices(1,idxs_ymed),sqrt(4*g*wd_ex(idxs_ymed)), ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
         title(strcat('c_n at t = ',num2str(t), ' - Predictor')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
         print(pfig,'-djpeg',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
         saveas(pfig,strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
-pfig=figure(1111); set(gcf,'Visible','off'); %<StRi<
+        
+        pfig=figure(1111); set(gcf,'Visible','off'); %<StRi<
         plot(vertices(1,idxs_ymin),una(idxs_ymin),vertices(1,idxs_ymax),una(idxs_ymax), ... %<StRi<
-             vertices(1,idxs_ymed),una(idxs_ymed),vertices(1,idxs_ymed),u_ex(idxs_ymed), ... %<StRi<
+             vertices(1,idxs_ymed),una(idxs_ymed),...%vertices(1,idxs_ymed),u_ex(idxs_ymed), ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','NorthWest') %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
         title(strcat('u_n at t = ',num2str(t), ' - Predictor')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
         print(pfig,'-djpeg',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
         saveas(pfig,strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
-pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
+        
+        pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
         plot(vertices(1,idxs_ymin),vna(idxs_ymin),vertices(1,idxs_ymax),vna(idxs_ymax), ... %<StRi<
              vertices(1,idxs_ymed),vna(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','NorthWest') %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
         title(strcat('v_n at t = ',num2str(t), ' - Predictor')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
         print(pfig,'-djpeg',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
         saveas(pfig,strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
+        
+        pfig=figure(1113); set(gcf,'Visible','off'); %<StRi<
+        plot(vertices(1,idxs_ymin),wdna(idxs_ymin),vertices(1,idxs_ymax),wdna(idxs_ymax), ... %<StRi<
+             vertices(1,idxs_ymed),wdna(idxs_ymed),vertices(1,idxs_ymed),wd_ex(idxs_ymed)) % ... %<StRi<
+             %vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
+%         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
+        title(strcat('wd_n at t = ',num2str(t), ' - Predictor')); %<StRi<
+        %print(pfig,'-deps',strcat(save_path,'wdn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
+        print(pfig,'-djpeg',strcat(save_path,'wdn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
+        saveas(pfig,strcat(save_path,'wdn_wet_ysection',num2str(t,'%.3f'),'apred','.fig')); %<StRi<
+
 
 
 %         temp = intersect(frontwettednodes,idxs_ymed); % it might happen that length(temp)>1 because of the mesh
@@ -908,12 +927,13 @@ temp=zeros(3*nov,1);
     saveas(pfig,strcat(save_path,'wetvel',num2str(t,'%.3f'),'bcorr','.fig'));
 
     idx_front_ymed = max(intersect(frontwettednodes,idxs_ymed));
+    
     pfig=figure(1100); set(gcf,'Visible','off');    %<StRi<
     plot(vertices(1,idxs_ymin),hn(idxs_ymin),vertices(1,idxs_ymax),hn(idxs_ymax), ... %<StRi<
         vertices(1,idxs_ymed),hn(idxs_ymed),vertices(1,idxs_ymed),h_ex(idxs_ymed), ... %<StRi<
         vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
     hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
     title(strcat('h_n at t = ',num2str(t), ' - Corrector')); %<StRi<
     %print(pfig,'-deps',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
     print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
@@ -921,34 +941,47 @@ temp=zeros(3*nov,1);
     
     pfig=figure(1110); set(gcf,'Visible','off'); %<StRi<
     plot(vertices(1,idxs_ymin),cn(idxs_ymin),vertices(1,idxs_ymax),cn(idxs_ymax), ... %<StRi<
-         vertices(1,idxs_ymed),cn(idxs_ymed),vertices(1,idxs_ymed),sqrt(4*g*h_ex(idxs_ymed)), ... %<StRi<
+         vertices(1,idxs_ymed),cn(idxs_ymed),vertices(1,idxs_ymed),sqrt(4*g*wd_ex(idxs_ymed)), ... %<StRi<
          vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
     hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
     title(strcat('c_n at t = ',num2str(t), ' - Corrector')); %<StRi<
     %print(pfig,'-deps',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
     print(pfig,'-djpeg',strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
     saveas(pfig,strcat(save_path,'cn_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
+    
     pfig=figure(1111); set(gcf,'Visible','off'); %<StRi<
-        plot(vertices(1,idxs_ymin),un(idxs_ymin),vertices(1,idxs_ymax),un(idxs_ymax), ... %<StRi<
-             vertices(1,idxs_ymed),un(idxs_ymed),vertices(1,idxs_ymed),u_ex(idxs_ymed), ... %<StRi<
-             vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','NorthWest') %<StRi<
-        title(strcat('u_n at t = ',num2str(t), ' - Corrector')); %<StRi<
-        %print(pfig,'-deps',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
-        print(pfig,'-djpeg',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
-        saveas(pfig,strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
-pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
-        plot(vertices(1,idxs_ymin),vn(idxs_ymin),vertices(1,idxs_ymax),vn(idxs_ymax), ... %<StRi<
-             vertices(1,idxs_ymed),vn(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
-             vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
-        hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','NorthWest') %<StRi<
-        title(strcat('v_n at t = ',num2str(t), ' - Corrector')); %<StRi<
-        %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
-        print(pfig,'-djpeg',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
-        saveas(pfig,strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
+    plot(vertices(1,idxs_ymin),un(idxs_ymin),vertices(1,idxs_ymax),un(idxs_ymax), ... %<StRi<
+         vertices(1,idxs_ymed),un(idxs_ymed),...%vertices(1,idxs_ymed),u_ex(idxs_ymed), ... %<StRi<
+         vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
+    hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
+    title(strcat('u_n at t = ',num2str(t), ' - Corrector')); %<StRi<
+    %print(pfig,'-deps',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
+    print(pfig,'-djpeg',strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
+    saveas(pfig,strcat(save_path,'un_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
+
+    pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
+    plot(vertices(1,idxs_ymin),vn(idxs_ymin),vertices(1,idxs_ymax),vn(idxs_ymax), ... %<StRi<
+         vertices(1,idxs_ymed),vn(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
+         vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
+    hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
+    title(strcat('v_n at t = ',num2str(t), ' - Corrector')); %<StRi<
+    %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
+    print(pfig,'-djpeg',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
+    saveas(pfig,strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
+    
+    pfig=figure(1113); set(gcf,'Visible','off'); %<StRi<
+    plot(vertices(1,idxs_ymin),wdn(idxs_ymin),vertices(1,idxs_ymax),wdn(idxs_ymax), ... %<StRi<
+         vertices(1,idxs_ymed),wdn(idxs_ymed),vertices(1,idxs_ymed),wd_ex(idxs_ymed)) % ... %<StRi<
+         %vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
+%     hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
+    legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','SouthWest') %<StRi<
+    title(strcat('wd_n at t = ',num2str(t), ' - Corrector')); %<StRi<
+    %print(pfig,'-deps',strcat(save_path,'wdn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
+    print(pfig,'-djpeg',strcat(save_path,'wdn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
+    saveas(pfig,strcat(save_path,'wdn_wet_ysection',num2str(t,'%.3f'),'bcorr','.fig')); %<StRi<
     
 %     pfig=figure(1101); set(gcf,'Visible','off'); %<StRi<
 %     plot(vertices(1,idxs_ymed),hn(idxs_ymed)-h_ex(idxs_ymed)) %<StRi<
@@ -968,8 +1001,8 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
     pause;
     close 1002
 %     un(find(hn==0)) = max(max(un));
-%     un(drynodes) = max(max(un(setdiff(wetnodes,frontnodes))));
-%     un(frontnodes) = max(max(un(setdiff(wetnodes,frontnodes))));
+    un(firstdrynodes) = max(max(un(setdiff(wetnodes,frontnodes))));
+    un(frontnodes) = max(max(un(setdiff(wetnodes,frontnodes))));
     % -----------POST PROCESSING-------------
 
     % Calcolo portate e volume per le verifiche sulla conservazione della massa

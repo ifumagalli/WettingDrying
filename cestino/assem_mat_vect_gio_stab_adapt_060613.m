@@ -1,5 +1,5 @@
 function [A,rhs] = assem_mat_vect_gio_stab_adapt(vertices,elements,boundaries,g,dt,un,vn,cn,una,vna,cna,theta,coeff,h0,h_k,f1,f2,f3,wdn,omega,time...
-    ,un_old,vn_old,cn_old,cn_vecchia,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,littlewetnodes,drynodes,save_path)
+    ,un_old,vn_old,cn_old,cn_vecchia,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,firstdrynodes,save_path)
 
 %
 % assembla la matrice globale e il termine noto del sistema 
@@ -111,7 +111,7 @@ theta_s = theta;
 % Per la correzione di continuità di cui in [Horritt, eq (12)]
 %   sui nodi completamente bagnati degli elementi parzialmente bagnati
 %   aggiungere eta*A_elem/2*(dc1/dt+dc2/dt)
-eta = 0;
+eta = 0.1;
 area = nanmean(pdetrg(vertices,elements));
 temp = setdiff(frontnodes,frontwettednodes);
 [temp1,temp2] = meshgrid(frontnodes,frontnodes);
@@ -131,60 +131,78 @@ CC_rhs = CC_A*[0.*un;0.*vn;cn];
 % f_Lh(frontnodes) = delta_front*f_Lh(frontnodes);
 
 % Per imporre u=umax sui dry
-% ESITO PROVE
-% 0-1-2-3-4-5 : u oscilla con valori anche negativi. Per forza, non ho
-% messo il - davanti al calcolo di val!
-% 0bis: u oscilla di bestia
-% 1bis-3bis-4bis: u esplode
-% 2bis: u oscilla con valori anche negativi
-% 5bis-5bis_ogni2Corr: u esplode, però fino a 0.8 h va bene, e poi il problema si genera da y=0
-% 5bis_ogni3Corr: come 5 bis, ma con problema che parte anche da y=max, ma un pochino più tardi
-% 5bis_ogni4Corr: esplode->salvata lo stesso
-% 5bis_ogni5Corr: OK->salvata
 [dx_cn_vecchia,dy_cn_vecchia]=pdegrad(vertices,elements,cn_vecchia);
 dx_cn_vecchia = pdeprtni(vertices,elements,dx_cn_vecchia);
 dy_cn_vecchia = pdeprtni(vertices,elements,dy_cn_vecchia);
+% [dx_cna,dy_cna]=pdegrad(vertices,elements,cna);
+% dx_cna = pdeprtni(vertices,elements,dx_cna);
+% dy_cna = pdeprtni(vertices,elements,dy_cna);
 val = zeros(nov,1);
-% temp = setdiff(wetnodes,frontnodes); % prova 2-2bis
-temp = setdiff(frontnodes,frontwettednodes); % prova 3-4 3bis
-% val(frontnodes) = (cna(frontnodes)-cn_vecchia(frontnodes))./(dt*dx_cn_vecchia(frontnodes)+eps); %prove <=1
-% val(frontnodes) = -(cna(frontnodes)-cn_vecchia(frontnodes))./(dt*dx_cn_vecchia(frontnodes)+eps); %prove 0bis-1bis
-% val(temp) = (cna(temp)-cn_vecchia(temp))./(dt*dx_cn_vecchia(temp)+eps); %prova 2
-val(temp) = -(cna(temp)-cn_vecchia(temp))./(dt*dx_cn_vecchia(temp)+eps); %prova 2bis
+% % % temp = setdiff(frontnodes,frontwettednodes);
+% % % temp = setdiff(wetnodes,frontnodes);
+temp = frontnodes;
+% val(frontnodes) = (cna(frontnodes)-cn_vecchia(frontnodes))./(dt*dx_cn_vecchia(frontnodes)+eps);
+val(temp) = -(cna(temp)-cn_vecchia(temp))./(dt*dx_cn_vecchia(temp)+eps);
+% val(temp) = -(cna(temp)-cn_vecchia(temp))./(dt*dx_cna(temp)+eps);
 ys = unique(vertices(2,:));
 for i=1:length(ys)
 %     [~,idx] = min(abs(vertices(2,:)-(ymax+ymin)/2));
 %     ymed = vertices(2,idx);
 %     idxs_ymed = find(vertices(2,:) == ymed);
     idxs = find(vertices(2,:) == ys(i));
-%     idx_front = max(intersect(idxs,frontnodes)); % prova 0-0bis
-%     idx_front = min(intersect(idxs,frontnodes)); % prova 1-1bis
-    idx_front = max(intersect(idxs,temp)); % prova 2-3-5-2bis-5bis
-%     idx_front = min(intersect(idxs,temp)); % prova 4-4bis
+% % %     idx_front = max(intersect(idxs,frontnodes));
+    idx_front = min(intersect(idxs,temp));
+% % %     idx_min = max(intersect(idxs,temp));
+%     idx_max = max(intersect(idxs,frontnodes))+1;
+% % %     idx_max = max(intersect(idxs,firstdrynodes));
     val(idxs(idxs >= idx_front)) = val(idx_front);
+% % %     val(idxs((idxs >= idx_min) & (idxs <= idx_max))) = val(idx_min);
 end
 val'
-% val = max(un(setdiff(wetnodes,frontnodes)));
+chi_wetnodes = 0.1*ones(nov,1);
+chi_wetnodes(drynodes)=-0.1;
+pfig=figure;
+pdesurf(vertices,elements,val)
+hold on; pdesurf(vertices,elements,chi_wetnodes)
+disp('era val'''); pause;
+close(pfig)
+% max_val = max(un(setdiff(wetnodes,frontnodes)));
+% val = min(val,max_val);
 % [V11,V12,V21,V22] = u_fixval_penalty(vertices,elements,val,2);
-V11 = M;
+% if mod(floor(time/dt),2)==0
+    V11 = M;
+% else
+%     V11 = Zero;
+% end
 V12 = 0.*V11;
 V21 = 0.*V11;
 V22 = 0.*V11;
 % V(un(setdiff([1:nov],drynodes)),un(setdiff([1:nov],drynodes)))=0*V(un(setdiff([1:nov],drynodes)),un(setdiff([1:nov],drynodes)));
 % V(un(setdiff([1:nov],drynodes)),:)=0*V(un(setdiff([1:nov],drynodes)),:);
 % V(:,un(setdiff([1:nov],drynodes)))=0*V(:,un(setdiff([1:nov],drynodes)));
-% V11(setdiff(wetnodes,frontnodes),:)=0; % prova <=4, (<=4)bis
-V11(wetnodes,:)=0; % prova 5-5bis
-if mod(floor(time/dt),4)~=0 
-    V11 = Zero;             
-end                         
-% V(:,wetnodes)=0*V(:,wetnodes);
+% V11(setdiff(wetnodes,frontnodes),:)=0;
+% V11(:,setdiff(wetnodes,frontnodes))=0; %aggiunta 31/05/13 h14:40
+% V11(wetnodes,:) = 0;
+% V11(:,wetnodes)=0*V11(:,wetnodes);
+V11(setdiff(wetnodes,frontnodes),:) = 0;
 V = gamma*[V11 , V12 , Zero;
            V21 , V22 , Zero;
            Zero, Zero, Zero];
+val=zeros(nov,1);   % PER PROVA
+val(firstdrynodes) = max(max(un(setdiff(wetnodes,frontnodes)))); % PER PROVA
+val(frontnodes) = max(max(un(setdiff(wetnodes,frontnodes)))); % PER PROVA
 % rhs_V = V*[val*ones(nov,1); zeros(nov,1); zeros(nov,1)];
 rhs_V = V*[val; zeros(nov,1); zeros(nov,1)];
 rhs_V(setdiff(wetnodes,frontnodes)) = 0;
+
+% % Dirichlet-Neumann sui dry
+% % du/dx = 0             sui dry
+% % u = - dc/dt / dc/dx   sul fronte (da eq di continuità)
+% A([drynodes drynodes+nov drynodes+2*nov],:) = 0;
+% A(:,[drynodes drynodes+nov drynodes+2*nov]) = 0;
+% rhs_x(drynodes) = 0; rhs_y(drynodes) = 0; rhs_3(drynodes) = 0;
+% rhs_fr([drynodes drynodes+nov]) = 0;
+% A(drynodes,:) = [Gx(drynodes,:) Zero(drynodes,:) Zero(drynodes,:)];
 
 % termine noto e matrice IN QUESTO ORDINE
 rhs = (M3 - (1-theta)*dt*A)*[un;vn;cn] + delta_s*(M_Lh - dt*(1-theta_s)*Lh)*[un;vn;cn] +dt*([rhs_x;rhs_y;rhs_3] - [rhs_fr;zeros(nov,1)] + delta_s*f_Lh) + CC_rhs + rhs_V;

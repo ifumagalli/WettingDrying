@@ -47,7 +47,7 @@ h_k_m=max(h_k)
 
 % Threshold wet nodes
 wdtol = 1e-6; % it will be: wdtol = wdtol*max(wdin)
-wdtol2 = 1e-3; % it will be: wdtol2 = wdtol2*max(wdin)
+wdtol2 = 0.1; % it will be: wdtol2 = wdtol2*max(wdin)
 deltat_deltax = dt/h_k_m % ??? unused
 [ar]=pdetrg(vertices,elements); % areas: [AR,A1,A2,A3]=pdetrg(P,T) returns the area of each triangle in AR
 
@@ -158,16 +158,16 @@ idxs_ymed = find(vertices(2,:) == ymed);
 % -----------INITIAL CONDITIONS------------
 
 disp('Initial conditions')
-[un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0,save_path);
-hn = wdin + h0; % height w.r.t. the reference plane
-hl = hn(1); hr = hn(end); %<StRi<
+% % % [un,vn,cin,wdin]=our_iniswe2D_gio(x,y,vertices,elements,tspan(1),g,h0,save_path);
+% % % hn = wdin + h0; % height w.r.t. the reference plane
+% % % hl = hn(1); hr = hn(end); %<StRi<
     % initial heigths at left/right: we presume that the 1st/last vertice
     % is at the left/right side of the mesh
-% % % hl = 3; hr = 0; %<StRi<
-% % % [un,hn,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[tstart tstart 0],h0,hl,hr,g,n,1); %<StRi<
-% % % vn = 1.e-16*ones(size(un)); %<StRi<
-% % %     % if we put zeros we have cond(matrix_to_be_solved) = infty
-% % % wdin = (hn-h0).*(hn-h0 > 0); %<StRi<
+hl = 3; hr = 0; %<StRi<
+[un,hn,~] = exact_Stoker_Ritter(vertices,elements,boundaries,save_path,[tstart tstart 0],h0,hl,hr,g,n,1); %<StRi<
+vn = 1.e-16*ones(size(un)); %<StRi<
+    % if we put zeros we have cond(matrix_to_be_solved) = infty
+wdin = (hn-h0).*(hn-h0 > 0); %<StRi<
 un = un .* (wdin > 0);
 % un(find(hn==0)) = max(max(un));
 cin = 2*(g*wdin).^0.5; %<StRi<
@@ -191,7 +191,11 @@ title('Initial condition - water depth only')
 print(pfig,'-djpeg',strcat(save_path,'AAAinitial','.jpeg'));
 saveas(pfig,strcat(save_path,'AAAinitial','.fig'));
 save(strcat(save_path,'init.mat'),'un','vn','cn');
-pfig=figure(1000); pdesurf(vertices,elements,h0); hold on; pdesurf(vertices,elements,hn);
+pfig=figure(10);
+subplot(2,1,1);
+    pdesurf(vertices,elements,h0); hold on; pdesurf(vertices,elements,hn);
+subplot(2,1,2);
+    pdesurf(vertices,elements,un);
 title('Initial condition')
 print(pfig,'-deps',strcat(save_path,'AAAinitial_both','.eps'));
 print(pfig,'-djpeg',strcat(save_path,'AAAinitial_both','.jpeg'));
@@ -413,7 +417,6 @@ cnold = cn;
 unoold = un;
 vnoold = vn;
 cnoold = cn;
-cn_vecchia = cn;
 save(strcat(save_path,'dati.mat'),'tspan','h_k','wdtol','wdtol2','g','n','l')
 
 % -----------TIME CICLE---------
@@ -496,7 +499,7 @@ chi_dry_c_nodes = zeros(size(vertices,2),1); chi_dry_c_nodes(dry_c_nodes)=1;
             %   sigma_res_t = pdeintrp(vertices,elements,sigma_res');  % ricavo un valore per ogni elemento
 
             [aglo,rhs] = assem_mat_vect_gio_stab_i(vertices,elements,boundaries,g,dt,un,vn,cn,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
-                ,unoold,vnoold,cnoold,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path); 
+                ,unoold,vnoold,cnoold,nx_nodes,ny_nodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path); 
             figure(101), set(gcf,'Visible','off');  spy(aglo); title('matrice aglo')
             % if ~isempty(nodesxy)
             %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
@@ -713,7 +716,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
              vertices(1,idxs_ymed),vna(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','NorthWest') %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
         title(strcat('v_n at t = ',num2str(t), ' - Predictor')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.eps')); %<StRi<
         print(pfig,'-djpeg',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'apred','.jpeg')); %<StRi<
@@ -725,6 +728,8 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
 
         pause;
         close 1002
+        
+%         una(drynodes) = max(max(una));
 %         un = una; vn = vna; cn = cna;
 %     end % end of predictor loop
 %     un = temp_un; vn = temp_vn; cn = temp_cn;
@@ -733,9 +738,6 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
     %@>%
     disp('Find wet nodes - Corrector')
     tic
-%     if(t==tstart)
-%         una(find(hna==0)) = max(max(una));
-%     end
         % Find wetnodes (da tenere)
         clear wetnodes
         dof_c_tot=dof_c; dof_uv_tot=dof_v; dof_tot=dof;% 'tot' = 'prima dell'intersezione con i wetnodes'
@@ -774,8 +776,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
     % vna(dry_uv_nodes) = 0;
 
     [aglo,rhs] = assem_mat_vect_gio_stab_adapt(vertices,elements,boundaries,g,dt,un,vn,cn,una,vna,cna,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
-        ,unoold,vnoold,cnoold,cn_vecchia,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path); 
-%     cn_vecchia = cn;
+        ,unoold,vnoold,cnoold,nx_nodes,ny_nodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path); 
 
     %if ~isempty(nodesxy)
     %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
@@ -856,7 +857,6 @@ temp=zeros(3*nov,1);
     end
     
 %     cn(wetnodes) = max(ctol,cn(wetnodes));
-    cn_vecchia = cn;
     disp('max(u) max(v) max(c)')
     [max(un),max(vn),max(cn)]
     disp('min(u) min(v) min(c)')
@@ -944,7 +944,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
              vertices(1,idxs_ymed),vn(idxs_ymed),vertices(1,idxs_ymed),0, ... %<StRi<
              vertices(1,idxs_ymed),h0(idxs_ymed),'k--') %<StRi<
         hold on; plot(vertices(1,idx_front_ymed),h0(idx_front_ymed),'ko','MarkerSize',3); hold off
-        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d','Location','NorthWest') %<StRi<
+        legend('y = y_m_i_n','y = y_m_a_x','y = y_m_e_d','exact 1D solution','bottom_m_e_d','front_m_e_d') %<StRi<
         title(strcat('v_n at t = ',num2str(t), ' - Corrector')); %<StRi<
         %print(pfig,'-deps',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.eps')); %<StRi<
         print(pfig,'-djpeg',strcat(save_path,'vn_wet_ysection',num2str(t,'%.3f'),'bcorr','.jpeg')); %<StRi<
@@ -957,6 +957,9 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
 %     print(pfig,'-djpeg',strcat(save_path,'hn_wet_ysection_error',num2str(t,'%.3f'),'.jpeg')); %<StRi<
 %     saveas(pfig,strcat(save_path,'hn_wet_ysection_error',num2str(t,'%.3f'),'.fig')); %<StRi<
 
+    un(firstdrynodes) = max(max(un(setdiff(wetnodes,frontnodes))));
+    un(frontnodes) = max(max(un(setdiff(wetnodes,frontnodes))));
+    
     % Wet nodes - Predictor and Corrector
     wetted_net=union(setdiff(wetted_pred,wetted_corr),setdiff(wetted_corr,wetted_pred))
     dryed_net=union(setdiff(dryed_pred,dryed_corr),setdiff(dryed_corr,dryed_pred))
@@ -967,9 +970,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
     disp(strcat(' --- End of time step t =  ',num2str(t),' ---'))
     pause;
     close 1002
-%     un(find(hn==0)) = max(max(un));
-%     un(drynodes) = max(max(un(setdiff(wetnodes,frontnodes))));
-%     un(frontnodes) = max(max(un(setdiff(wetnodes,frontnodes))));
+
     % -----------POST PROCESSING-------------
 
     % Calcolo portate e volume per le verifiche sulla conservazione della massa

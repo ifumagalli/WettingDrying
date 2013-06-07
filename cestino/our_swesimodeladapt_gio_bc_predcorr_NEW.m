@@ -32,10 +32,10 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % Save path
 %ELENA%
 % save_path = 'C:\Users\Elena\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
-% save_path = 'C:\Users\Elena\Desktop\temp\';
+save_path = 'C:\Users\Elena\Desktop\temp\';
 %IVAN%
 % save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
-save_path = 'C:\Users\Ivan\Documents\temp_Ivan\'
+% save_path = 'C:\Users\Ivan\Documents\temp_Ivan\'
 
 % Temporal and spatial steps
 %coarse=3; % alpha sempre =1 %??? unused

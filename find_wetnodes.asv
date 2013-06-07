@@ -9,16 +9,18 @@ function [wetnodes,littlewetnodes,frontnodes,frontwettednodes] = find_wetnodes(e
 %           'corr' 2nd step of predictor-corrector algorithm
 % NB:	- A node is said to be wet if it's a vertice of a triangle that has 
 % 		  wd > tol in at least 2 vertices
-%       - A wet node is said to be little wet if it has c < tol2
+%       - A wet node is said to be little wet if it has wd < tol2
 %		- A node is said to be on the front if it is a vertice of a partially
-%		  wet triangle: exactly 2 vertices have c>tol
-%       - A front node
+%		  wet triangle: exactly 2 vertices have wd > tol
+%       - frontwettednodes: front nodes on which wd < tol
 
 switch phase
     case 'pred',
         tol = 2*sqrt(g*tol/10); % tol was on height, and we have celerity
+        tol2 = 2*sqrt(g*tol2/10);
     case 'corr',
         tol = 2*sqrt(g*tol);
+        tol2 = 2*sqrt(g*tol2);
     otherwise,
 end
 
@@ -62,14 +64,18 @@ frontnodes = unique(frontnodes);
 frontwettednodes = unique(frontwettednodes);
 littlewetnodes = unique(littlewetnodes);
  
-% new_wetnodes = [];
-% for i=1:size(elements,2)
-%     v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
-% %     if ~isempty(union(union(find(wetnodes==v1),find(wetnodes==v2)),find(wetnodes==v3)))
-%     if (~isempty(find(wetnodes==v1))+~isempty(find(wetnodes==v2))+~isempty(find(wetnodes==v3)))>1
-%         new_wetnodes = [new_wetnodes v1 v2 v3];
-%     end
-% end
-% wetnodes = unique(new_wetnodes);
+old_wetnodes = wetnodes;
+for i=1:3
+    new_wetnodes = [];
+    for i=1:size(elements,2)
+        v1 = elements(1,i); v2 = elements(2,i); v3 = elements(3,i);
+    %     if ~isempty(union(union(find(old_wetnodes==v1),find(old_wetnodes==v2)),find(old_wetnodes==v3)))
+        if (~isempty(find(old_wetnodes==v1))+~isempty(find(old_wetnodes==v2))+~isempty(find(old_wetnodes==v3)))>1
+            new_wetnodes = [new_wetnodes v1 v2 v3];
+        end
+    end
+    old_wetnodes = unique(new_wetnodes);
+end
+firstdrynodes = setdiff(unique(new_wetnodes),wetnodes);
 
 end

@@ -32,10 +32,10 @@ function our_swesimodeladapt_gio_bc_predcorr(vertices,elements,boundaries,tspan,
 % Save path
 %ELENA%
 % save_path = 'C:\Users\Elena\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
-% save_path = 'C:\Users\Elena\Desktop\temp\';
+save_path = 'C:\Users\Elena\Desktop\temp\';
 %IVAN%
 % save_path = 'C:\Users\Ivan\Dropbox\Elena&Ivan\AnEDP2\Progetto ANEDP2\saves\temp\'
-save_path = 'C:\Users\Ivan\Documents\temp_Ivan\'
+% save_path = 'C:\Users\Ivan\Documents\temp_Ivan\'
 
 % Temporal and spatial steps
 %coarse=3; % alpha sempre =1 %??? unused
@@ -413,7 +413,6 @@ cnold = cn;
 unoold = un;
 vnoold = vn;
 cnoold = cn;
-cn_vecchia = cn;
 save(strcat(save_path,'dati.mat'),'tspan','h_k','wdtol','wdtol2','g','n','l')
 
 % -----------TIME CICLE---------
@@ -774,8 +773,7 @@ pfig=figure(1112); set(gcf,'Visible','off'); %<StRi<
     % vna(dry_uv_nodes) = 0;
 
     [aglo,rhs] = assem_mat_vect_gio_stab_adapt(vertices,elements,boundaries,g,dt,un,vn,cn,una,vna,cna,theta,sigma_res,h0,h_k,f1,f2,f3,wdn,1,t...
-        ,unoold,vnoold,cnoold,cn_vecchia,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path); 
-%     cn_vecchia = cn;
+        ,unoold,vnoold,cnoold,nx_nodes,ny_nodes,wetnodes,frontnodes,frontwettednodes,drynodes,littlewetnodes,save_path); 
 
     %if ~isempty(nodesxy)
     %     aglo(nodesxy,:) = sparse(1:nnzxy,nodesxy,ones(1,nnzxy),nnzxy,3*nov,...
@@ -856,7 +854,6 @@ temp=zeros(3*nov,1);
     end
     
 %     cn(wetnodes) = max(ctol,cn(wetnodes));
-    cn_vecchia = cn;
     disp('max(u) max(v) max(c)')
     [max(un),max(vn),max(cn)]
     disp('min(u) min(v) min(c)')
